@@ -5,6 +5,7 @@ import { formatSeoulTime, seoulInputTime } from "@/lib/data/time";
 import { manualConditions, type ManualDraft } from "@/lib/domain/manual";
 import type { Candidate, Conditions, Recommendation } from "@/lib/domain/types";
 import type { PopulationOverview } from "@/lib/server/population";
+import { TemporalEvidence } from "./temporal-evidence";
 
 function changeText(candidate: Candidate, names: Map<string, string>, c: Conditions) {
   const parts: string[] = [];
@@ -70,7 +71,7 @@ export function ManualPlanner({ overview }: { overview: PopulationOverview }) {
             <label>원래 도착 시각<input required type="datetime-local" step="60" value={draft.arrival} onChange={e => update({ arrival: e.target.value })} /></label>
             <label>머무는 시간 (분)<input required type="number" min="15" max="240" step="1" value={draft.duration} onChange={e => update({ duration: e.target.value })} /></label>
           </div>
-          <p className="note">머무는 시간은 유지하지만, 그 시간 내내 같은 혼잡도를 보장하지는 않아요.</p>
+          <p className="note">도착부터 머무는 시간까지의 예측 표본을 함께 비교해요. 종료까지 자료가 부족하면 추천에서 제외합니다.</p>
         </fieldset>
         <fieldset><legend>바꿔도 되는 범위</legend>
           <label className="checkbox"><input type="checkbox" checked={draft.allowPlaceChange} onChange={e => update({ allowPlaceChange: e.target.checked })} />다른 한강공원으로 변경해도 괜찮아요</label>
@@ -87,7 +88,7 @@ export function ManualPlanner({ overview }: { overview: PopulationOverview }) {
             <label>가장 이른 도착<input required type="datetime-local" step="60" value={draft.windowStart} onChange={e => update({ windowStart: e.target.value })} /></label>
             <label>가장 늦은 도착<input required type="datetime-local" step="60" value={draft.windowEnd} onChange={e => update({ windowEnd: e.target.value })} /></label>
           </div>}
-          <p className="note">‘늦어도 괜찮아요’는 도착을 앞당기지 않습니다. 없는 예측 시각을 보간하거나 반올림하지 않아요.</p>
+          <p className="note">‘늦어도 괜찮아요’는 도착을 앞당기지 않습니다. 시각 사이에서는 60분 이내 간격의 전후 예측을 참고하고, 인구만 숨맵 추정으로 보간해요.</p>
         </fieldset>
         <fieldset><legend>선호하는 비교</legend><div className="form-grid">
           <label>혼잡 선호<select value={draft.maximumCongestion} onChange={e => update({ maximumCongestion: e.target.value as ManualDraft["maximumCongestion"] })}>
@@ -96,7 +97,7 @@ export function ManualPlanner({ overview }: { overview: PopulationOverview }) {
           <label>비교 기준<select value={draft.ranking} onChange={e => update({ ranking: e.target.value as ManualDraft["ranking"] })}>
             <option value="minimum-change">계획 변경 최소</option><option value="less-crowded">덜 붐빔 우선</option>
           </select></label>
-        </div><p className="note">‘변경 최소’는 혼잡 선호를 만족하는 안 중 변경 항목 수 → 장소 유지 → 시간 차이 순으로 비교해요. 필수 조건을 자동으로 풀지 않습니다.</p></fieldset>
+        </div><p className="note">체류 구간의 평가 표본이 모두 혼잡 선호 이내인 안을 우선해요. ‘변경 최소’는 그 안에서 변경 항목 수 → 장소 유지 → 시간 차이 순으로 비교합니다. 필수 조건을 자동으로 풀지 않습니다.</p></fieldset>
         <fieldset><legend>자료 기준 확인</legend>
           <p className="note">30분이 넘은 관측은 현재 상태로 취급하지 않아요. 30~60분 전 원자료에 포함된 미래 예측은 아래 항목을 선택한 경우에만 참고 비교합니다. 60분 초과·대체 자료·수신 지연 자료는 제외해요.</p>
           <label className="checkbox"><input type="checkbox" checked={draft.allowDelayedForecasts} onChange={e => update({ allowDelayedForecasts: e.target.checked })} />지연 예측 참고 비교를 허용해요</label>
@@ -107,7 +108,7 @@ export function ManualPlanner({ overview }: { overview: PopulationOverview }) {
       </form>
     </section>
     {result && applied && <section className="results" aria-labelledby="result-title" aria-live="polite">
-      <div className="panel"><h2 id="result-title">{result.status === "ready" ? "조건에 맞는 비교 결과" : result.status === "preference-unmet" ? "혼잡 선호에 못 미치는 결과" : "비교를 완료하지 못했어요"}</h2>
+      <div className="panel"><h2 id="result-title">{result.status === "ready" ? "조건에 맞는 비교 결과" : result.status === "preference-uncertain" ? "혼잡 선호 충족이 불확실한 결과" : result.status === "preference-unmet" ? "혼잡 선호에 못 미치는 결과" : "비교를 완료하지 못했어요"}</h2>
         <p>{result.message}</p>
         <p>원래 계획: {names.get(applied.originalPlan.placeId!)} · {formatSeoulTime(applied.originalPlan.preferredArrivalAt!)} · {applied.originalPlan.durationMinutes}분 머물기</p>
         <p>반드시 지킬 범위: {applied.hard.pinnedPlaceId ? `${names.get(applied.hard.pinnedPlaceId)}만` : applied.hard.allowedPlaceIds?.map(id => names.get(id)).join(", ") || "허용 장소 없음"}<br />
@@ -124,7 +125,7 @@ export function ManualPlanner({ overview }: { overview: PopulationOverview }) {
           <p className="eyebrow">{title}{!option.eligible ? " · 비교 제외" : c?.dataConfidence === "delayed" ? " · 지연 예측 참고" : ""}</p>
           <h3>{c ? names.get(c.placeId) : names.get(applied.originalPlan.placeId!)}</h3>
           <p>{formatSeoulTime(c?.arrivalAt ?? applied.originalPlan.preferredArrivalAt!)} 도착 · {applied.originalPlan.durationMinutes}분 머물기</p>
-          {c ? <><p><strong>{c.congestion}</strong> 예측{!c.meetsPreference ? " · 혼잡 선호 미충족" : " · 혼잡 선호 충족"}</p>
+          {c ? <><TemporalEvidence candidate={c} />
             <p>{changeText(c, names, applied)}</p>
             <p className="note">원자료 기준 {formatSeoulTime(c.sourceUpdatedAt)} · 수신 {formatSeoulTime(c.fetchedAt)}<br />계산 시점 기준 {Math.max(0, Math.floor((Date.parse(result.checkedAt) - Date.parse(c.sourceUpdatedAt)) / 60_000))}분 전 자료</p>
           </> : <p>해당 시각 예측을 확인할 수 없어요.</p>}

@@ -1,7 +1,7 @@
-import type { Candidate, Conditions, CongestionLevel, Place, Recommendation, Snapshot } from "./types.ts";
+import type { Candidate, Conditions, Place, Recommendation, Snapshot } from "./types.ts";
 import { assessSnapshot, forecastUse } from "../data/quality.ts";
+import { alignArrival, assessVisit, congestionOrder } from "./temporal.ts";
 
-const severity: Record<CongestionLevel, number> = { "여유": 0, "보통": 1, "약간 붐빔": 2, "붐빔": 3 };
 const unique = (values: string[]) => [...new Set(values)];
 const lexical = (a: string, b: string) => a < b ? -1 : a > b ? 1 : 0;
 
@@ -32,12 +32,13 @@ function timeReasons(at: string, c: Conditions, nowMs: number): string[] {
   return reasons;
 }
 function makeCandidate(snapshot: Snapshot, at: string, c: Conditions, nowMs: number): Candidate | null {
-  const point = snapshot.forecasts.find(p => p.at === at);
-  if (!point) return null;
+  const arrival = alignArrival(snapshot, at);
+  if (arrival.kind === "unavailable") return null;
+  const visit = assessVisit(snapshot, at, c.originalPlan.durationMinutes, c.soft.maximumPreferredCongestion);
   return { id: `${snapshot.placeId}@${at}`, placeId: snapshot.placeId, arrivalAt: at,
-    congestion: point.congestion, snapshotId: snapshot.id, evidenceIds: [`${snapshot.id}#forecast:${at}`],
+    arrival, visit, snapshotId: snapshot.id, evidenceIds: visit.evidence.map(p => p.id),
     sourceUpdatedAt: snapshot.sourceUpdatedAt, fetchedAt: snapshot.fetchedAt, dataConfidence: forecastUse(snapshot, nowMs),
-    meetsPreference: severity[point.congestion] <= severity[c.soft.maximumPreferredCongestion],
+    meetsPreference: visit.preference === "supported",
     change: { placeChanged: c.originalPlan.placeId === null ? null : c.originalPlan.placeId !== snapshot.placeId,
       arrivalDeltaMinutes: c.originalPlan.preferredArrivalAt === null ? null :
         (Date.parse(at) - Date.parse(c.originalPlan.preferredArrivalAt)) / 60_000 } };
@@ -45,17 +46,32 @@ function makeCandidate(snapshot: Snapshot, at: string, c: Conditions, nowMs: num
 function compare(a: Candidate, b: Candidate, mode: Conditions["soft"]["ranking"]) {
   const changes = (v: Candidate) => Number(v.change.placeChanged === true) + Number(v.change.arrivalDeltaMinutes !== null && v.change.arrivalDeltaMinutes !== 0);
   const delta = (v: Candidate) => Math.abs(v.change.arrivalDeltaMinutes ?? 0);
-  const congestion = severity[a.congestion] - severity[b.congestion];
+  const congestion = congestionOrder[a.visit.worstSampledCongestion!] - congestionOrder[b.visit.worstSampledCongestion!];
   const minimum = [changes(a) - changes(b), Number(a.change.placeChanged) - Number(b.change.placeChanged), delta(a) - delta(b)];
   const order = mode === "less-crowded" ? [congestion, ...minimum] : [...minimum, congestion];
-  return order.find(v => v !== 0) ?? (lexical(a.arrivalAt, b.arrivalAt) || lexical(a.placeId, b.placeId));
+  return (order.find(v => v !== 0) ?? (Number(a.visit.trend !== "same") - Number(b.visit.trend !== "same"))) ||
+    lexical(a.arrivalAt, b.arrivalAt) || lexical(a.placeId, b.placeId);
+}
+
+function candidateTimes(snapshot: Snapshot, c: Conditions): string[] {
+  // A finite, explainable set; no synthetic forecast samples or per-minute grid.
+  const times = snapshot.forecasts.map(p => p.at);
+  if (c.originalPlan.durationMinutes !== null) times.push(...snapshot.forecasts.map(p =>
+    new Date(Date.parse(p.at) - c.originalPlan.durationMinutes! * 60_000).toISOString()));
+  return unique([...times, c.originalPlan.preferredArrivalAt, c.hard.pinnedArrivalAt,
+    c.hard.arrivalWindow.notBefore, c.hard.arrivalWindow.notAfter].filter((at): at is string => at !== null)).sort();
+}
+function coverageReasons(candidate: Candidate | null): string[] {
+  return !candidate ? ["도착 시각을 평가할 예측이 없어요. 정확히 일치하는 표본 또는 60분 이내 간격의 양쪽 표본이 필요해요."] :
+    candidate.visit.coverage !== "complete" ? ["체류 종료까지 예측이 이어지지 않거나 표본 간격이 60분을 넘어 비교에서 제외했어요. 부족한 구간을 외삽하지 않아요."] : [];
 }
 
 /** Pure deterministic engine: caller supplies validated conditions, server data and time. */
 export function recommend(c: Conditions, places: Place[], snapshots: Snapshot[], nowMs: number): Recommendation {
   const result: Recommendation = { checkedAt: new Date(nowMs).toISOString(), conditionsRevision: c.revision,
     snapshotIds: [], status: "no-candidates", message: "", recommendedCandidateId: null, alternativeCandidateIds: [],
-    candidates: [], explanation: null, limitations: ["서울시가 제공한 도착 시각의 예측만 비교해요. 머무는 시간 내내 같은 혼잡도를 보장하지 않아요.", "장소별 혼잡 지표이며 소음·실제 이동시간은 계산하지 않아요."],
+    candidates: [], explanation: null, limitations: ["도착·체류 구간을 둘러싼 서울시 예측 표본으로 비교해요. 같은 단계의 표본 사이에서도 실제 혼잡은 달라질 수 있어요.",
+      "시각 사이의 인구는 숨맵이 선형 보간한 참고 추정값이며 공식 예측·신뢰구간이 아니에요. 혼잡 단계는 보간하지 않아요.", "장소별 혼잡 지표이며 소음·실제 이동시간은 계산하지 않아요."],
     options: [], excludedPlaces: [], availableForecastTimes: [], eligibleCount: 0 };
   if (c.hard.allowedPlaceIds === null || !c.hard.arrivalWindow.notBefore || !c.hard.arrivalWindow.notAfter) {
     return { ...result, status: "needs-clarification", message: "비교해도 되는 장소와 도착 범위를 먼저 정해주세요." };
@@ -73,39 +89,47 @@ export function recommend(c: Conditions, places: Place[], snapshots: Snapshot[],
     const forecasts = assessSnapshot(snapshot, nowMs).futureForecasts;
     result.availableForecastTimes.push(...forecasts.map(p => p.at));
     let added = 0;
-    for (const point of forecasts) {
-      if (timeReasons(point.at, c, nowMs).length) continue;
-      const candidate = makeCandidate(snapshot, point.at, c, nowMs)!;
+    const missing = new Set<string>();
+    for (const at of candidateTimes(snapshot, c)) {
+      if (timeReasons(at, c, nowMs).length) continue;
+      const candidate = makeCandidate(snapshot, at, c, nowMs);
+      const reasons = coverageReasons(candidate);
+      if (!candidate || reasons.length) { reasons.forEach(r => missing.add(r)); continue; }
       eligible.push(candidate); added++;
     }
-    if (!added) result.excludedPlaces.push({ placeId: place.id, reasons: ["허용한 날짜·범위·고정 시각에 맞는 제공 예측이 없어요. 시각을 임의로 반올림하지 않아요."] });
+    if (!added) result.excludedPlaces.push({ placeId: place.id, reasons: missing.size ? [...missing] : ["허용한 날짜·범위·고정 시각에 맞는 후보가 없어요."] });
   }
   result.availableForecastTimes = unique(result.availableForecastTimes).sort();
   result.eligibleCount = eligible.length;
   const preferred = eligible.filter(v => v.meetsPreference);
-  const ranked = [...(preferred.length ? preferred : eligible)].sort((a, b) => compare(a, b, preferred.length ? c.soft.ranking : "less-crowded"));
+  const uncertain = eligible.filter(v => v.visit.preference === "uncertain");
+  const pool = preferred.length ? preferred : uncertain.length ? uncertain : eligible;
+  const ranked = [...pool].sort((a, b) => compare(a, b, preferred.length ? c.soft.ranking : "less-crowded"));
   if (ranked.length) {
-    result.status = preferred.length ? "ready" : "preference-unmet";
-    result.message = preferred.length ? "반드시 지킬 조건 안에서 비교했어요." : "혼잡 선호를 만족하는 안이 없어요. 필수 조건은 지키면서 상대적으로 덜 붐비는 안을 보여드려요.";
+    result.status = preferred.length ? "ready" : uncertain.length ? "preference-uncertain" : "preference-unmet";
+    result.message = preferred.length ? "반드시 지킬 조건 안에서, 평가에 사용한 예측 표본이 모두 혼잡 선호 이내인 안을 골랐어요." : uncertain.length
+      ? "도착·체류 경계 주변의 예측이 선호 수준을 넘나들어요. 선호 충족을 단정할 수 없는 참고 후보입니다."
+      : "평가에 사용한 예측에 혼잡 선호를 넘는 단계가 있어요. 필수 조건은 유지하며 비교합니다.";
     result.recommendedCandidateId = ranked[0].id;
     result.options.push({ role: "recommended", candidate: ranked[0], eligible: true, reasons: [] });
     result.explanation = { reason: preferred.length ? c.soft.ranking === "minimum-change"
-      ? "혼잡 선호를 만족하는 안 중 변경 항목 수, 장소 유지, 시간 차이 순으로 골랐어요."
-      : "허용 범위 안에서 혼잡 단계가 낮은 안을 먼저 골랐어요."
-      : "선호 수준에는 못 미치지만, 허용 범위 안에서 혼잡 단계가 가장 낮은 안이에요.",
+      ? "평가 표본이 모두 선호 이내인 안 중 변경 항목 수, 장소 유지, 시간 차이 순으로 골랐어요."
+      : "평가 표본이 모두 선호 이내인 안 중 가장 높은 표본 단계가 낮은 안을 먼저 골랐어요."
+      : uncertain.length ? "선호 충족이 불확실한 안 중 전후 표본의 가장 높은 단계를 보수적으로 비교했어요."
+      : "평가에 사용한 표본의 가장 높은 단계를 기준으로 상대적으로 덜 붐비는 안을 골랐어요.",
       tradeoff: "장소 변경의 실제 이동 부담은 계산하지 않았어요. 갈 수 있는 장소만 허용해주세요.", evidenceIds: ranked[0].evidenceIds };
   } else {
     result.status = !hardPlaces ? "no-candidates" : !usablePlaces ? "data-unavailable" : "forecast-unavailable";
     result.message = !hardPlaces ? "장소 조건을 모두 지키는 후보가 없어요. 허용 장소·고정 조건을 확인해주세요."
       : !usablePlaces ? "사용 가능한 예측 자료가 없어 비교를 보류했어요. 아래 제외 이유를 확인해주세요."
-        : "지정한 시각의 예측이 없어요. 제공 시각을 확인한 뒤 도착 범위를 직접 조정해주세요.";
+        : "도착부터 체류 종료까지 평가할 예측이 부족해요. 제공 시각과 제외 이유를 확인해주세요.";
   }
   let originalOption: Recommendation["options"][number] | null = null;
   if (c.originalPlan.placeId !== null && c.originalPlan.preferredArrivalAt !== null) {
     const place = places.find(p => p.id === c.originalPlan.placeId), snapshot = byPlace.get(c.originalPlan.placeId);
     const candidate = snapshot ? makeCandidate(snapshot, c.originalPlan.preferredArrivalAt, c, nowMs) : null;
     const reasons = [...(place ? placeReasons(place, c) : ["지원하지 않는 원래 장소예요."]), ...dataReasons(snapshot, c, nowMs),
-      ...timeReasons(c.originalPlan.preferredArrivalAt, c, nowMs), ...(!candidate ? ["원래 도착 시각에 해당하는 예측이 없어요."] : [])];
+      ...timeReasons(c.originalPlan.preferredArrivalAt, c, nowMs), ...coverageReasons(candidate)];
     originalOption = { role: "original", candidate, eligible: candidate !== null && !reasons.length, reasons: unique(reasons) };
   }
   const originalIsRecommended = originalOption?.candidate?.id === result.recommendedCandidateId && result.recommendedCandidateId !== null;

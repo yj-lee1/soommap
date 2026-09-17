@@ -12,7 +12,7 @@ const at = (time: string, date = "2026-09-17") => parseSeoulTime(`${date} ${time
 const now = Date.parse(at("15:00"));
 const places = enabledPlaces.slice(0, 2);
 function conditions(): Conditions {
-  return { revision: 1, activity: "walk", originalPlan: { placeId: "yeouido", preferredArrivalAt: at("16:00"), durationMinutes: 60 },
+  return { revision: 1, activity: "walk", originalPlan: { placeId: "yeouido", preferredArrivalAt: at("16:00"), durationMinutes: null },
     hard: { requiredSettings: ["park", "riverside"], allowedPlaceIds: places.map(p => p.id), excludedPlaceIds: [],
       pinnedPlaceId: null, pinnedArrivalAt: null,
       arrivalWindow: { timeZone: "Asia/Seoul", localDate: "2026-09-17", notBefore: at("16:00"), notAfter: at("17:00") } },
@@ -65,20 +65,21 @@ test("both pins are honored even when congestion preference cannot be met", () =
   assert.equal(r.options[0].candidate?.meetsPreference, false);
 });
 
-test("an unavailable 16:30 pin is never rounded to 16:00 or 17:00", () => {
+test("a 16:30 pin stays at 16:30 and compares its bracketing samples", () => {
   const c = conditions(); c.originalPlan.preferredArrivalAt = at("16:30"); c.hard.pinnedArrivalAt = at("16:30");
   c.hard.arrivalWindow.notBefore = at("16:30"); c.hard.arrivalWindow.notAfter = at("16:30");
   const r = run(c);
-  assert.equal(r.status, "forecast-unavailable"); assert.equal(r.recommendedCandidateId, null);
+  assert.equal(r.status, "ready"); assert.equal(r.recommendedCandidateId, `banpo@${at("16:30")}`);
   assert.ok(r.availableForecastTimes.includes(at("17:00")));
-  assert.equal(r.options[0].candidate, null);
+  assert.equal(r.options[0].candidate?.arrival.kind, "between");
+  assert.deepEqual(r.options[0].candidate?.arrival.evidence.map(p => p.at), [at("16:00"), at("17:00")]);
 });
 
 test("no preferred candidate falls back within hard limits with an explicit unmet status", () => {
   const c = conditions(); c.soft.maximumPreferredCongestion = "여유"; c.hard.pinnedArrivalAt = at("16:00");
   const r = run(c);
   assert.equal(r.status, "preference-unmet"); assert.equal(r.recommendedCandidateId, `banpo@${at("16:00")}`);
-  assert.equal(r.options[0].candidate?.congestion, "보통");
+  assert.equal(r.options[0].candidate?.visit.worstSampledCongestion, "보통");
 });
 
 test("empty permissions, unknown permissions and missing predictions are distinct", () => {
@@ -166,7 +167,7 @@ test("candidate evidence always identifies the exact supplied forecast sample", 
   const data = samples(), r = run(conditions(), data);
   for (const candidate of r.candidates) {
     const source = data.find(s => s.id === candidate.snapshotId)!;
-    assert.equal(source.forecasts.find(p => p.at === candidate.arrivalAt)?.congestion, candidate.congestion);
+    assert.equal(source.forecasts.find(p => p.at === candidate.arrivalAt)?.congestion, candidate.arrival.evidence[0].congestion);
     assert.equal(candidate.evidenceIds[0], `${source.id}#forecast:${candidate.arrivalAt}`);
   }
 });

@@ -7,7 +7,7 @@ export const runtime = "nodejs";
 export default async function Home() {
   const overview = await getPopulationOverview();
   return <main className="page planner-page">
-    <header><p className="eyebrow">개발 검수용 · 2단계</p><h1>숨맵</h1>
+    <header><p className="eyebrow">개발 검수용 · 2단계 보완 · 도착·체류 평가</p><h1>숨맵</h1>
       <p className="lead">내 조건을 지키며, 덜 붐비는 외출 계획 찾기</p>
       <p>한강공원 5곳의 실제 예측을 비교합니다. 지금은 수동 조건 입력으로 작동하며, 자연어 AI 연결과 화면 디자인은 다음 단계입니다.</p>
       <Link href="/data" prefetch={false}>5곳 원자료·기준 시각·예측 표 보기</Link>

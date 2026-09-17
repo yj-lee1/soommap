@@ -23,6 +23,35 @@ export interface ForecastPoint {
   populationRange?: { min: number; max: number };
 }
 
+export interface ForecastEvidence extends ForecastPoint { id: string }
+export type ForecastTrend = "same" | "rising" | "falling" | "mixed" | "unknown";
+export type AlignmentGap = "no-forecast" | "before-range" | "after-range" | "wide-gap";
+export interface ArrivalAlignment {
+  at: IsoDateTime;
+  kind: "exact" | "between" | "unavailable";
+  evidence: ForecastEvidence[];
+  trend: ForecastTrend;
+  gap: AlignmentGap | null;
+  population: {
+    kind: "official" | "linear-estimate";
+    min: number;
+    max: number;
+    weight: number | null;
+  } | null;
+}
+export interface VisitAssessment {
+  scope: "arrival" | "stay";
+  startAt: IsoDateTime;
+  endAt: IsoDateTime;
+  coverage: "complete" | "partial" | "unavailable";
+  evidence: ForecastEvidence[];
+  gaps: Array<{ startAt: IsoDateTime; endAt: IsoDateTime; reason: AlignmentGap }>;
+  trend: ForecastTrend;
+  // An ordinal comparison of supplied samples, never an interpolated category.
+  worstSampledCongestion: CongestionLevel | null;
+  preference: "supported" | "uncertain" | "exceeds" | "unknown";
+}
+
 export interface Snapshot {
   id: string;
   placeId: PlaceId;
@@ -75,7 +104,8 @@ export interface Candidate {
   id: string;
   placeId: PlaceId;
   arrivalAt: IsoDateTime;
-  congestion: CongestionLevel;
+  arrival: ArrivalAlignment;
+  visit: VisitAssessment;
   snapshotId: string;
   evidenceIds: string[];
   sourceUpdatedAt: IsoDateTime;
@@ -92,7 +122,7 @@ export interface Recommendation {
   checkedAt: IsoDateTime;
   conditionsRevision: number;
   snapshotIds: string[];
-  status: "ready" | "preference-unmet" | "needs-clarification" | "no-candidates" | "data-unavailable" | "forecast-unavailable";
+  status: "ready" | "preference-uncertain" | "preference-unmet" | "needs-clarification" | "no-candidates" | "data-unavailable" | "forecast-unavailable";
   message: string;
   recommendedCandidateId: string | null;
   alternativeCandidateIds: string[];

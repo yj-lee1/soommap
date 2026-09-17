@@ -22,6 +22,8 @@ globalThis.fetch = async (input) => {
   row.PPLTN_TIME = toKst(now - (state.sourceAgeMinutes ?? 5) * 60_000);
   const firstForecast = Math.ceil((now + 60_000) / 3_600_000) * 3_600_000;
   row.FCST_PPLTN = row.FCST_PPLTN.map((p, i) => ({ ...p, FCST_TIME: toKst(firstForecast + i * 3_600_000),
-    ...(state.planningScenario ? { FCST_CONGEST_LVL: areaCode === "POI105" ? (i === 0 ? "붐빔" : i === 1 ? "보통" : "여유") : (i === 0 ? "보통" : "여유") } : {}) }));
+    ...(state.planningScenario ? { FCST_CONGEST_LVL: areaCode === "POI105" ? (i === 0 ? "붐빔" : i === 1 ? "보통" : "여유") : (i === 0 ? "보통" : "여유") } : {}),
+    ...(state.temporalScenario ? { FCST_CONGEST_LVL: areaCode === "POI105" ? (i === 0 ? "보통" : i === 1 ? "약간 붐빔" : "붐빔") : "보통",
+      FCST_PPLTN_MIN: String(14_000 + i * 4_000), FCST_PPLTN_MAX: String(16_000 + i * 5_000) } : {}) }));
   return Response.json(body);
 };

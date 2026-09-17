@@ -2,10 +2,11 @@
 
 내 조건을 지키며 덜 붐비는 외출 계획을 찾고 조정하는 웹 서비스.
 
-현재 **2단계: 수동 조건 입력과 실제 예측 기반 추천 엔진**까지 구현했습니다. 자연어 AI 연결과 디자인은 이후 단계입니다.
+현재 **2단계 보완: 수동 조건·도착시각 정렬·체류 구간 평가**까지 구현했습니다. 시각 사이의 인구는 숨맵 추정으로 구분하며, 공식 혼잡 단계와 원시 근거를 보존합니다. 자연어 AI·교통 API·디자인은 이후 단계입니다.
 
 - [2단계 검수 보고·공개 URL](docs/reviews/stage-2.md)
 - [추천 규칙·지연 예측 정책](docs/recommendation-engine.md)
+- [도착·체류 정렬 정책과 검증](docs/temporal-alignment.md)
 - [데이터 구조·캐시·품질 정책](docs/data-foundation.md)
 - [실행 계획](docs/soommap-execution-plan.md)
 - [진행·검수 기록](docs/soommap-progress.md)
