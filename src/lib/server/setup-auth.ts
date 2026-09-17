@@ -1,8 +1,9 @@
 import "server-only";
 import { timingSafeEqual } from "node:crypto";
+import { getServerConfig } from "./config";
 
 export function isSetupAuthorized(request: Request): boolean {
-  const expected = process.env.SETUP_CHECK_TOKEN?.trim();
+  const expected = getServerConfig().setupToken;
   if (!expected || expected.length < 32) return false;
 
   const authorization = request.headers.get("authorization");

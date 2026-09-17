@@ -1,0 +1,10 @@
+.git
+.env*
+.local
+docs
+scripts
+AGENTS.md
+README.md
+coverage
+playwright-report
+test-results
