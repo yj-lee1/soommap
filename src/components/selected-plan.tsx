@@ -28,7 +28,7 @@ export function SelectedPlanPanel({ plan, choice, conditions, places, pending, e
     {pending && <p role="status">선택한 장소와 시각의 자료를 확인하고 있어요. 아래 근거는 확인이 끝나기 전 자료입니다.</p>}
     {error && <p className="notice" role="alert">{error}</p>}
     {plan?.notice && <p className="notice">{plan.notice}</p>}
-    {plan && !usable && !pending && !error && plan.check.eligible && <p className="notice">확인 후 시간이 지났거나 도착시각이 지났어요. 자료를 다시 확인해주세요.</p>}
+    {plan && !usable && !pending && !error && plan.check.eligible && <p className="notice">자료의 최신성 기준, 확인 유효시간 또는 도착시각을 지났어요. 자료를 다시 확인해주세요.</p>}
     {plan?.check.reasons.map(reason => <p className="notice" key={reason}>{reason}</p>)}
     {candidate && <><TemporalEvidence candidate={candidate} />
       <p className="note">원자료 {formatSeoulTime(candidate.sourceUpdatedAt)} · 수신 {formatSeoulTime(candidate.fetchedAt)} · 확인 {formatSeoulTime(plan!.check.checkedAt)}</p>

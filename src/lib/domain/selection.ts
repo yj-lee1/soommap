@@ -31,7 +31,7 @@ export function updateSelection(previous: SelectedPlan | null, check: SelectionC
   const unchanged = sameChoice && fingerprint(previous!.check.candidate) === fingerprint(check.candidate) && previous!.check.conditionsRevision === check.conditionsRevision;
   return { check, confirmedAt: check.eligible && unchanged ? previous!.confirmedAt : null,
     notice: !check.eligible ? "선택은 유지했지만 지금 자료로는 이 계획을 확정할 수 없어요." : !sameChoice ? null : unchanged
-      ? "선택한 장소와 시각의 전망을 다시 확인했어요. 평가 내용은 같아요." : "예측 내용이 달라졌어요. 선택은 유지했으니 새 근거를 확인한 뒤 다시 확정해주세요." };
+      ? "선택한 장소와 시각의 전망을 다시 확인했어요. 평가 내용은 같아요." : "예측 내용이나 자료 최신성 상태가 달라졌어요. 선택은 유지했으니 새 근거를 확인한 뒤 다시 확정해주세요." };
 }
 export function locationLink(place: Place): string {
   return `https://map.kakao.com/link/map/${encodeURIComponent(place.name)},${place.displayPoint.latitude},${place.displayPoint.longitude}`;
