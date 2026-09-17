@@ -1,0 +1,91 @@
+{
+  "RESULT": {
+    "RESULT.CODE": "INFO-000"
+  },
+  "SeoulRtd.citydata_ppltn": [
+    {
+      "AREA_CD": "POI105",
+      "AREA_NM": "여의도한강공원",
+      "AREA_CONGEST_LVL": "여유",
+      "AREA_PPLTN_MIN": "5000",
+      "AREA_PPLTN_MAX": "5500",
+      "PPLTN_TIME": "2026-09-17 14:40",
+      "REPLACE_YN": "N",
+      "FCST_YN": "Y",
+      "FCST_PPLTN": [
+        {
+          "FCST_TIME": "2026-09-17 16:00",
+          "FCST_CONGEST_LVL": "보통",
+          "FCST_PPLTN_MIN": "4500",
+          "FCST_PPLTN_MAX": "5000"
+        },
+        {
+          "FCST_TIME": "2026-09-17 17:00",
+          "FCST_CONGEST_LVL": "보통",
+          "FCST_PPLTN_MIN": "4500",
+          "FCST_PPLTN_MAX": "5000"
+        },
+        {
+          "FCST_TIME": "2026-09-17 18:00",
+          "FCST_CONGEST_LVL": "보통",
+          "FCST_PPLTN_MIN": "4500",
+          "FCST_PPLTN_MAX": "5000"
+        },
+        {
+          "FCST_TIME": "2026-09-17 19:00",
+          "FCST_CONGEST_LVL": "보통",
+          "FCST_PPLTN_MIN": "4000",
+          "FCST_PPLTN_MAX": "4500"
+        },
+        {
+          "FCST_TIME": "2026-09-17 20:00",
+          "FCST_CONGEST_LVL": "여유",
+          "FCST_PPLTN_MIN": "3000",
+          "FCST_PPLTN_MAX": "3500"
+        },
+        {
+          "FCST_TIME": "2026-09-17 21:00",
+          "FCST_CONGEST_LVL": "여유",
+          "FCST_PPLTN_MIN": "2500",
+          "FCST_PPLTN_MAX": "3000"
+        },
+        {
+          "FCST_TIME": "2026-09-17 22:00",
+          "FCST_CONGEST_LVL": "여유",
+          "FCST_PPLTN_MIN": "2000",
+          "FCST_PPLTN_MAX": "2500"
+        },
+        {
+          "FCST_TIME": "2026-09-17 23:00",
+          "FCST_CONGEST_LVL": "여유",
+          "FCST_PPLTN_MIN": "1500",
+          "FCST_PPLTN_MAX": "2000"
+        },
+        {
+          "FCST_TIME": "2026-09-18 00:00",
+          "FCST_CONGEST_LVL": "여유",
+          "FCST_PPLTN_MIN": "1000",
+          "FCST_PPLTN_MAX": "1500"
+        },
+        {
+          "FCST_TIME": "2026-09-18 01:00",
+          "FCST_CONGEST_LVL": "여유",
+          "FCST_PPLTN_MIN": "900",
+          "FCST_PPLTN_MAX": "1000"
+        },
+        {
+          "FCST_TIME": "2026-09-18 02:00",
+          "FCST_CONGEST_LVL": "여유",
+          "FCST_PPLTN_MIN": "700",
+          "FCST_PPLTN_MAX": "800"
+        },
+        {
+          "FCST_TIME": "2026-09-18 03:00",
+          "FCST_CONGEST_LVL": "여유",
+          "FCST_PPLTN_MIN": "700",
+          "FCST_PPLTN_MAX": "800"
+        }
+      ]
+    }
+  ]
+}

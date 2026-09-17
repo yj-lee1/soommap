@@ -2,9 +2,10 @@
 
 내 조건을 지키며 덜 붐비는 외출 계획을 찾고 조정하는 웹 서비스.
 
-현재 **0단계: 개발 환경·실제 연동·검수 배포 확인 완료, 사용자 검수 대기**입니다. 실제 공원 데이터나 AI 추천을 제공하는 완성 서비스가 아닙니다.
+현재 **1단계: 한강공원 5곳의 실제 데이터·예측·캐시 구현**까지 진행했습니다. 조건 입력·추천 엔진·AI 해석은 이후 단계입니다.
 
-- [0단계 검수 보고·공개 URL](docs/reviews/stage-0.md)
+- [1단계 검수 보고·공개 URL](docs/reviews/stage-1.md)
+- [데이터 구조·캐시·품질 정책](docs/data-foundation.md)
 - [실행 계획](docs/soommap-execution-plan.md)
 - [진행·검수 기록](docs/soommap-progress.md)
 - [환경 설정](docs/environment-setup.md)
@@ -23,7 +24,10 @@ npm run dev
 
 ```sh
 npm run check
+npm test
 npm run build
 ```
 
 각 단계의 자체 확인을 마친 뒤 사용자 검수를 받고 다음 단계로 진행합니다.
+
+`npm test`는 고정 fixture와 모의 통신만 사용합니다. 실제 OpenAI 검사를 반복 실행하지 않습니다. Vercel Hobby의 Preview를 검수에 사용하며, Production 환경변수와 배포는 별도로 관리합니다.

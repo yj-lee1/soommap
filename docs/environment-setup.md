@@ -1,6 +1,6 @@
-# 0단계 환경 설정
+# 환경 설정
 
-현재 단계에서는 외부 API 인증과 배포 연결만 확인한다. 공원 데이터 목록·추천 엔진·제품 AI 해석은 다음 단계의 검수 범위다.
+0단계의 외부 API·배포 연결을 그대로 사용한다. 1단계는 공원 5곳의 데이터·예측·캐시를 추가하며, 추천 엔진·제품 AI 해석은 이후 단계다. 최신 검수 URL은 해당 단계 보고를 따른다.
 
 ## 로컬 실행
 
@@ -15,7 +15,7 @@ Node.js 24와 npm을 사용한다. `npm ci`, `npm run dev`로 시작한다. 기�
 필요한 경우 다음처럼 기존 GitHub CLI 인증을 해당 push에만 사용한다. 토큰을 URL이나 파일에 쓰지 않는다.
 
 ```sh
-git -c credential.helper= -c 'credential.helper=!gh auth git-credential' push origin codex/soommap-build
+git -c credential.helper= -c 'credential.helper=!gh auth git-credential' push origin feat/hangang-data-foundation
 ```
 
 ## 비밀값 입력
@@ -26,6 +26,8 @@ git -c credential.helper= -c 'credential.helper=!gh auth git-credential' push or
 |---|---|---|
 | `SEOUL_API_KEY` | 서울 열린데이터광장 인증 | 설정 완료, 실제 한강 응답 확인 |
 | `SEOUL_API_BASE_URL` | 서울 API 주소 | 기본 `http://openapi.seoul.go.kr:8088` |
+| `DATA_CACHE_NAMESPACE` | 공개 데이터 캐시 식별자 | 기본 `soommap-seoul-live-v1`, 모의 검사는 분리 |
+| `DATA_CACHE_SECONDS` | 자료 재검사 간격 | 기본 `300`, 30~300 허용. 운영 기본값 유지 |
 | `AI_PROVIDER` | 제품 AI 공급자 | `openai` 승인 |
 | `AI_MODEL` | 공급자에서 사용할 모델 | `gpt-5.6-terra` 승인·접근 확인 |
 | `AI_API_KEY` | 선택한 공급자의 서버 인증 | 사용자 설정 완료 |
@@ -49,7 +51,7 @@ git -c credential.helper= -c 'credential.helper=!gh auth git-credential' push or
 - 다른 Node.js 24 호스팅에서는 `npm ci` → `npm run build` → `npm run start -- --port 3000`으로 실행한다. 실행 환경이 주는 `PORT`도 사용할 수 있다. 시작 서버는 컨테이너 외부에서 접근 가능하며 필요하면 `--hostname 127.0.0.1`로 제한한다.
 - 같은 서버 환경변수를 대상 호스팅의 비밀값 설정에 넣고 `npm run check:setup -- https://검증한-배포주소 --probe`로 확인한다. 프록시의 HTTPS와 서울 공식 API의 8088 포트 송신을 허용해야 한다.
 - 서울 공식 API는 현재 검사에서 HTTP 8088로 정상 응답했으며 HTTPS 두 주소는 연결 실패했다. 키 포함 요청 URL·원시 오류를 로그에 남기지 않는다. 임의의 제3자 프록시에 키를 전달하지 않는다.
-- 영속 데이터·공유 캐시·예산 저장소는 아직 추가 전이다. 다음 단계에서 표준 외부 저장소 연결을 별도 어댑터로 구성하고 이전 절차를 갱신한다.
+- 공개 데이터는 표준 Next.js Data Cache를 사용한다. 단일 서버는 캐시 디스크를 유지하고, 여러 인스턴스는 Next.js cache handler로 공유 저장소를 연결한다. 캐시가 비면 서울시 원본에서 다시 읽는다. 세부 동작·한계는 [데이터 기반 문서](data-foundation.md)를 따른다. AI 전역 예산 원장은 별도 구현 전이다.
 
 ## 확인 범위
 

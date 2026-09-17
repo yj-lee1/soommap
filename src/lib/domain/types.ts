@@ -1,4 +1,4 @@
-/** Stage 0 contracts. Validation and recommendation behavior follow in later stages. */
+/** Shared product contracts, independent of hosting and API response formats. */
 export type PlaceId = string;
 export type IsoDateTime = string;
 export type CongestionLevel = "여유" | "보통" | "약간 붐빔" | "붐빔";
@@ -35,6 +35,7 @@ export interface Snapshot {
   isReplacement: boolean | null;
   forecastAvailable: boolean;
   forecasts: ForecastPoint[];
+  issues: string[];
 }
 
 export interface PlanReference {

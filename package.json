@@ -2,6 +2,7 @@
   "name": "soommap",
   "version": "0.0.0",
   "private": true,
+  "type": "module",
   "engines": {
     "node": "24.x"
   },
@@ -13,7 +14,8 @@
     "lint": "eslint .",
     "check": "npm run typecheck && npm run lint",
     "check:setup": "node scripts/check-setup.mjs",
-    "check:ai": "node scripts/check-ai.mjs"
+    "check:ai": "node scripts/check-ai.mjs",
+    "test": "node --conditions=react-server --test tests/*.test.ts"
   },
   "dependencies": {
     "next": "^16.3.5",

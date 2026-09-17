@@ -5,7 +5,7 @@ export async function GET() {
     {
       status: "ok",
       service: "soommap",
-      stage: "setup",
+      stage: "data-foundation",
       checkedAt: new Date().toISOString(),
       integrationsVerified: false,
     },

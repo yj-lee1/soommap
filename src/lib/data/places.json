@@ -1,0 +1,122 @@
+[
+  {
+    "id": "yeouido",
+    "name": "여의도한강공원",
+    "source": {
+      "provider": "seoul-city",
+      "areaCode": "POI105"
+    },
+    "groupIds": [
+      "hangang_walk"
+    ],
+    "activities": [
+      "walk"
+    ],
+    "settings": [
+      "riverside",
+      "park"
+    ],
+    "displayPoint": {
+      "latitude": 37.526517,
+      "longitude": 126.93497597770701
+    },
+    "boundaryRef": "/data/hangang-boundaries.geojson#POI105",
+    "enabled": true
+  },
+  {
+    "id": "banpo",
+    "name": "반포한강공원",
+    "source": {
+      "provider": "seoul-city",
+      "areaCode": "POI095"
+    },
+    "groupIds": [
+      "hangang_walk"
+    ],
+    "activities": [
+      "walk"
+    ],
+    "settings": [
+      "riverside",
+      "park"
+    ],
+    "displayPoint": {
+      "latitude": 37.5109785,
+      "longitude": 126.99820940887354
+    },
+    "boundaryRef": "/data/hangang-boundaries.geojson#POI095",
+    "enabled": true
+  },
+  {
+    "id": "ttukseom",
+    "name": "뚝섬한강공원",
+    "source": {
+      "provider": "seoul-city",
+      "areaCode": "POI093"
+    },
+    "groupIds": [
+      "hangang_walk"
+    ],
+    "activities": [
+      "walk"
+    ],
+    "settings": [
+      "riverside",
+      "park"
+    ],
+    "displayPoint": {
+      "latitude": 37.5297315,
+      "longitude": 127.06859619761525
+    },
+    "boundaryRef": "/data/hangang-boundaries.geojson#POI093",
+    "enabled": true
+  },
+  {
+    "id": "mangwon",
+    "name": "망원한강공원",
+    "source": {
+      "provider": "seoul-city",
+      "areaCode": "POI094"
+    },
+    "groupIds": [
+      "hangang_walk"
+    ],
+    "activities": [
+      "walk"
+    ],
+    "settings": [
+      "riverside",
+      "park"
+    ],
+    "displayPoint": {
+      "latitude": 37.5530505,
+      "longitude": 126.89869198522274
+    },
+    "boundaryRef": "/data/hangang-boundaries.geojson#POI094",
+    "enabled": true
+  },
+  {
+    "id": "nanji",
+    "name": "난지한강공원",
+    "source": {
+      "provider": "seoul-city",
+      "areaCode": "POI090"
+    },
+    "groupIds": [
+      "hangang_walk"
+    ],
+    "activities": [
+      "walk"
+    ],
+    "settings": [
+      "riverside",
+      "park"
+    ],
+    "displayPoint": {
+      "latitude": 37.566569,
+      "longitude": 126.8766496262704
+    },
+    "boundaryRef": "/data/hangang-boundaries.geojson#POI090",
+    "enabled": true
+  }
+]
