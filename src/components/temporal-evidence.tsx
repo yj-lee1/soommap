@@ -1,5 +1,6 @@
 import { formatSeoulTime } from "@/lib/data/time";
 import type { Candidate, ForecastTrend, VisitAssessment } from "@/lib/domain/types";
+import { ForecastChart } from "./forecast-chart";
 
 const trendText: Record<ForecastTrend, string> = {
   same: "평가에 사용한 예측 표본은 같은 혼잡 단계예요.",
@@ -31,6 +32,10 @@ export function TemporalEvidence({ candidate }: { candidate: Candidate }) {
       `도착 시각 인구 · 숨맵 추정 약 ${number(Math.round(population.min / 100) * 100)}~${number(Math.round(population.max / 100) * 100)}명`}</p>}
     {arrival.kind === "between" && !population && <p className="note">양쪽 인구 범위가 없어 인구는 보간하지 않았어요. 혼잡 단계 표본으로만 비교해요.</p>}
     {visit.coverage !== "complete" && <p className="notice">전체 체류 구간을 평가할 수 없어 추천에서는 제외했어요.</p>}
+    <details><summary>체류 구간 예측 그래프</summary>
+      <ForecastChart points={visit.evidence} startAt={visit.evidence[0]?.at ?? visit.startAt}
+        hours={Math.max(1, (Date.parse(visit.evidence.at(-1)?.at ?? visit.endAt) - Date.parse(visit.evidence[0]?.at ?? visit.startAt)) / 3_600_000)} visit={visit} />
+    </details>
     <details><summary>예측 근거와 계산 방식</summary>
       <p className="note">{arrival.kind === "exact" ? "도착 시각과 일치하는 공식 예측값입니다." :
         "도착 시각 양쪽의 공식 예측을 참고합니다. 해당 시각의 공식 혼잡 단계나 단계 전환 시각을 새로 만들지 않습니다."}</p>

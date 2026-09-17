@@ -66,3 +66,23 @@ tbody th { font-weight: 400; }
   .panel { padding: 1rem; }
   dl > div { grid-template-columns: 1fr; gap: 0.125rem; }
 }
+/* Functional visualizations; final brand treatment follows in the design stage. */
+.forecast-figure { margin: 1rem 0; }
+.chart-scroll { max-width: 100%; overflow-x: auto; }
+.forecast-chart { display: block; width: 100%; min-width: 32rem; }
+.forecast-chart text, .area-map text { fill: var(--foreground); font-size: 14px; }
+.forecast-chart .chart-small, .area-map .chart-small { font-size: 12px; }
+.chart-grid { stroke: var(--border); }
+.chart-gap { stroke: var(--secondary); stroke-dasharray: 3 4; }
+.forecast-dot { fill: var(--focus); stroke: white; stroke-width: 2; }
+.visit-shade { fill: var(--focus); opacity: 0.1; }
+.area-map { display: block; width: 100%; background: var(--background); border: 1px solid var(--border); }
+.area-shape { fill: #d4dae3; stroke: #4b5565; stroke-width: 1; }
+.area-shape.selected { fill: #b5d0f5; stroke: var(--focus); stroke-width: 2; }
+.map-marker { cursor: pointer; }
+.marker { fill: white; stroke: var(--secondary); stroke-width: 2; }
+.marker.selected { fill: var(--focus); }
+.area-map .marker.selected + .marker-label { fill: white; }
+.marker-stem { stroke: var(--secondary); }
+.access-point { fill: #17212e; stroke: white; stroke-width: 1; }
+#place-explorer { scroll-margin-top: 1rem; }

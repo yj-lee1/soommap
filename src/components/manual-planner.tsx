@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { formatSeoulTime, seoulInputTime } from "@/lib/data/time";
 import { draftFromConditions, manualConditions, type ManualDraft } from "@/lib/domain/manual";
 import type { Candidate, Conditions, Recommendation } from "@/lib/domain/types";
@@ -14,6 +14,9 @@ import { TemporalEvidence } from "./temporal-evidence";
 
 import { OriginControls } from "./origin-controls";
 import type { Origin, TransitBundle } from "@/lib/domain/mobility";
+import { PLANNER_STORAGE_KEY, parseSavedPlanner, readSavedPlanner, type SavedChoice } from "@/lib/domain/saved-planner";
+import { SavedPlanPanel } from "./saved-plan";
+import { PlaceExplorer } from "./place-explorer";
 
 function changeText(candidate: Candidate, names: Map<string, string>, c: Conditions) {
   const parts: string[] = [];
@@ -26,14 +29,15 @@ function changeText(candidate: Candidate, names: Map<string, string>, c: Conditi
 }
 
 export function ManualPlanner({ overview, mobilityReady }: { overview: PopulationOverview; mobilityReady: boolean }) {
-  const places = overview.rows.map(row => row.place);
+  const places = useMemo(() => overview.rows.map(row => row.place), [overview]);
   const names = new Map(places.map(p => [p.id, p.name]));
   const times = [...new Set(overview.rows.flatMap(row => row.quality?.futureForecasts.map(p => p.at) ?? []))].sort();
   const firstArrival = times[0] ?? new Date(Math.ceil((Date.parse(overview.checkedAt) + 60_000) / 3_600_000) * 3_600_000).toISOString();
-  const [draft, setDraft] = useState<ManualDraft>(() => ({ placeId: places[0].id, arrival: seoulInputTime(firstArrival), duration: "60",
+  const initialDraft = (): ManualDraft => ({ placeId: places[0].id, arrival: seoulInputTime(firstArrival), duration: "60",
     allowPlaceChange: false, allowedPlaceIds: places.map(p => p.id), timeMode: "fixed", windowStart: seoulInputTime(firstArrival),
     windowEnd: seoulInputTime(new Date(Date.parse(firstArrival) + 60 * 60_000).toISOString()),
-    maximumCongestion: "보통", ranking: "minimum-change", allowDelayedForecasts: false }));
+    maximumCongestion: "보통", ranking: "minimum-change", allowDelayedForecasts: false });
+  const [draft, setDraft] = useState<ManualDraft>(initialDraft);
   const [origin, setOrigin] = useState<Origin | null>(null), [automatic, setAutomatic] = useState(false);
   const [transit, setTransit] = useState<TransitBundle | null>(null);
   const transitRef = useRef<TransitBundle | null>(null);
@@ -54,12 +58,62 @@ export function ManualPlanner({ overview, mobilityReady }: { overview: Populatio
   const selectionSequence = useRef(0), selectionRequest = useRef<AbortController | null>(null);
   const [revision, setRevision] = useState(0);
   const sequence = useRef(0), active = useRef<AbortController | null>(null);
+  const [hydrated, setHydrated] = useState(false), [storageNotice, setStorageNotice] = useState("");
+  const [savedChoice, setSavedChoice] = useState<SavedChoice | null>(null);
+  const skipSave = useRef(false);
+  const restoredOnce = useRef(false);
+  const [exploredPlaceId, setExploredPlaceId] = useState(places[0].id);
   useEffect(() => () => { active.current?.abort(); selectionRequest.current?.abort(); }, []);
+
+  useEffect(() => {
+    if (restoredOnce.current) return;
+    restoredOnce.current = true;
+    // Hydrate after SSR; local storage is an external source, unavailable during server rendering.
+    /* eslint-disable react-hooks/set-state-in-effect */
+    try {
+      const { state, status } = readSavedPlanner(window.localStorage, places, Date.now());
+      if (state) {
+        setDraft(state.draft); setText(state.text); setOrigin(state.origin); setAutomatic(state.automatic);
+        setReplanning(state.replanning); replanningRef.current = state.replanning; setSavedChoice(state.selection);
+        setEdited(true); setStorageNotice("이전에 입력한 조건과 계획을 복원했어요. 새 비교는 버튼을 누를 때만 실행합니다.");
+      } else if (status === "discarded") setStorageNotice("보관 기간이 지났거나 읽을 수 없는 저장 내용을 삭제했어요. 새 계획을 입력해주세요.");
+      else if (status === "unavailable") setStorageNotice("브라우저 저장을 사용할 수 없어 이번 화면에서만 유지돼요.");
+    } catch { setStorageNotice("브라우저 저장을 사용할 수 없어 이번 화면에서만 유지돼요."); }
+    setHydrated(true);
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, [places]);
+  useEffect(() => {
+    if (!hydrated) return;
+    if (skipSave.current) { skipSave.current = false; return; }
+    try {
+      const selection = choice && response ? { choice, conditions: response.conditions, confirmedAt: selected?.confirmedAt ?? null } : savedChoice;
+      const state = parseSavedPlanner({ version: 1, savedAt: new Date().toISOString(), draft, text, origin, automatic, replanning, selection }, places, Date.now());
+      window.localStorage.setItem(PLANNER_STORAGE_KEY, JSON.stringify(state));
+    } catch {
+      // Saving failure must not break the usable in-memory planner.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setStorageNotice("입력은 유지했지만 기기에 저장하지 못했어요. 브라우저 저장 설정과 입력값을 확인해주세요.");
+    }
+  }, [hydrated, draft, text, origin, automatic, replanning, choice, response, selected, savedChoice, places]);
 
   function nextRevision() { const value = ++sequence.current; setRevision(value); return value; }
   function setAdjustmentState(state: Replanning | null) { replanningRef.current = state; setReplanning(state); }
   function clearSelection() {
-    selectionSequence.current++; selectionRequest.current?.abort(); setChoice(null); setSelected(null); setSelectionPending(false); setSelectionError("");
+    selectionSequence.current++; selectionRequest.current?.abort(); setChoice(null); setSelected(null); setSavedChoice(null); setSelectionPending(false); setSelectionError("");
+  }
+
+  function clearSaved() {
+    try { window.localStorage.removeItem(PLANNER_STORAGE_KEY); }
+    catch { setStorageNotice("기기의 저장 내용을 지우지 못했어요. 브라우저의 사이트 데이터 설정에서 삭제해주세요."); return; }
+    skipSave.current = true;
+    update({}); storeTransit(null); setOrigin(null); setAutomatic(false); setText(""); setDraft(initialDraft());
+    setStorageNotice("저장된 입력·출발지·계획을 삭제했어요. 새 입력부터 다시 저장합니다.");
+  }
+  function compareSaved() {
+    if (!savedChoice) return;
+    const state = replanningRef.current ?? startReplanning(savedChoice.conditions), version = nextRevision();
+    setAdjustmentState(state); clearSelection(); setErrorScope("manual");
+    void compare(effectiveConditions(state, version, places), version);
   }
 
   function update(patch: Partial<ManualDraft>) {
@@ -177,7 +231,14 @@ export function ManualPlanner({ overview, mobilityReady }: { overview: Populatio
   }
   const result = response?.result, applied = response?.conditions;
   const resultCurrent = applied?.revision === revision && !pending;
+  if (!hydrated) return <section className="panel" role="status">저장된 계획을 확인하고 있어요…</section>;
   return <>
+    <section className="panel" aria-label="기기에 저장한 계획">
+      <p role="status">{storageNotice || "입력 조건과 계획이 이 브라우저에 자동 저장됩니다."}</p>
+      <p className="note">출발지 좌표·입력 문장·고정 및 제외 조건·선택 계획을 마지막 저장부터 7일간 보관해요. 같은 주소와 브라우저에서 다시 열면 복원됩니다. 혼잡 자료·이동시간·인증 토큰은 저장하지 않아요.</p>
+      <button onClick={clearSaved}>저장 내용 삭제하고 새로 시작</button>
+    </section>
+    {savedChoice && <SavedPlanPanel saved={savedChoice} origin={origin} places={places} pending={pending} onCompare={compareSaved} onDismiss={clearSelection} />}
     <OriginControls origin={origin} automatic={automatic} transit={transit?.context ?? null} disabled={pending} mobilityReady={mobilityReady}
       onOrigin={value => { setOrigin(value); storeTransit(null); update({}); }}
       onMode={value => {
@@ -298,6 +359,7 @@ export function ManualPlanner({ overview, mobilityReady }: { overview: Populatio
             <p className="note">원자료 기준 {formatSeoulTime(c.sourceUpdatedAt)} · 수신 {formatSeoulTime(c.fetchedAt)}<br />계산 시점 기준 {Math.max(0, Math.floor((Date.parse(result.checkedAt) - Date.parse(c.sourceUpdatedAt)) / 60_000))}분 전 자료</p>
           </> : <p>해당 시각 예측을 확인할 수 없어요.</p>}
           {option.reasons.map(text => <p className="notice" key={text}>{text}</p>)}
+          {c && <button onClick={() => { setExploredPlaceId(c.placeId); document.getElementById("place-explorer")?.scrollIntoView({ block: "start" }); }}>위치·전체 예측 보기</button>}
           {c && option.eligible && <div className="action-row">
             {replanning && !replanning.base.hard.pinnedPlaceId && <button disabled={!resultCurrent} onClick={() => adjust({ type: "pin-place", placeId: c.placeId })}>이 장소 고정</button>}
             {replanning && !replanning.base.hard.pinnedArrivalAt && <button disabled={!resultCurrent} onClick={() => adjust({ type: "pin-time", at: c.arrivalAt })}>이 시각 고정</button>}
@@ -312,5 +374,6 @@ export function ManualPlanner({ overview, mobilityReady }: { overview: Populatio
       {result.status === "forecast-unavailable" && result.availableForecastTimes.length > 0 && <div className="panel"><h3>현재 제공된 예측 시각</h3><p>허용한 장소 중 하나 이상에서 제공한 시각입니다. 모든 공원에 같은 시각의 예측이 있다는 뜻은 아니에요.</p>
         <p>{result.availableForecastTimes.map(at => formatSeoulTime(at)).join(" / ")}</p><p>위 입력에서 시각이나 허용 범위를 직접 수정해주세요.</p></div>}
     </section>}
+    <PlaceExplorer overview={overview} selectedId={exploredPlaceId} onSelect={setExploredPlaceId} />
   </>;
 }

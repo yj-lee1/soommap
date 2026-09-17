@@ -48,6 +48,6 @@ export function SelectedPlanPanel({ plan, choice, conditions, places, origin, pe
     {copyMessage && <p role="status">{copyMessage}</p>}
     {copyFallback && <label>복사할 계획 문구<textarea readOnly rows={9} value={copyFallback} onFocus={e => e.target.select()} /></label>}
     <div className="action-row"><button disabled={pending} onClick={onRecheck}>선택한 계획의 자료 다시 확인</button><button onClick={onAdjust}>다시 조정하기</button></div>
-    <p className="note">자료를 다시 확인해도 선택한 장소·시각은 자동으로 바뀌지 않아요. 화면의 자료는 공용 캐시를 사용하며 최대 5분 간격으로 갱신합니다. 이 선택은 현재 탭에서 유지되고 새로고침하면 초기화됩니다.</p>
+    <p className="note">자료를 다시 확인해도 선택한 장소·시각은 자동으로 바뀌지 않아요. 화면의 자료는 공용 캐시를 사용하며 최대 5분 간격으로 갱신합니다. 선택·확정 계획은 이 브라우저에 저장되며, 다시 열 때 이전 혼잡·이동시간은 최신 정보로 복원하지 않습니다.</p>
   </section>;
 }
