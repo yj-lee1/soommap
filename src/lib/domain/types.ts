@@ -12,7 +12,8 @@ export interface Place {
   groupIds: string[];
   activities: Activity[];
   settings: PlaceSetting[];
-  displayPoint: { latitude: number; longitude: number };
+  displayCoordinate: { latitude: number; longitude: number };
+  accessPoint: { id: string; name: string; coordinate: { latitude: number; longitude: number }; sourceUrl: string; verifiedAt: string };
   boundaryRef: string;
   enabled: boolean;
 }
@@ -101,6 +102,7 @@ export interface Conditions {
 }
 
 export interface Candidate {
+  travel?: import("./mobility.ts").TransitRoute & { departureAt: string; expiresAt: string };
   id: string;
   placeId: PlaceId;
   arrivalAt: IsoDateTime;

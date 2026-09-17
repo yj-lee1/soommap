@@ -1,3 +1,4 @@
+import { readTransitToken } from "@/lib/server/transit";
 import { cookies } from "next/headers";
 import { enabledPlaces } from "@/lib/data/catalog";
 import { ConditionsError } from "@/lib/domain/conditions";
@@ -36,7 +37,7 @@ async function readInput(request: Request): Promise<PlanInput> {
       const { done, value } = await reader.read();
       if (done) break;
       bytes += value.byteLength;
-      if (bytes > 8192) { await reader.cancel(); throw new ConditionsError("요청이 너무 길어요."); }
+      if (bytes > 16384) { await reader.cancel(); throw new ConditionsError("요청이 너무 길어요."); }
       chunks.push(value);
     }
   } finally { reader.releaseLock(); }
@@ -48,7 +49,8 @@ async function readInput(request: Request): Promise<PlanInput> {
     typeof value.requestId !== "string" || !/^[a-f0-9-]{36}$/.test(value.requestId) || typeof value.allowDelayedForecasts !== "boolean") {
     throw new ConditionsError("외출 계획은 1~1,200자로 입력해주세요.");
   }
-  return { text: value.text.trim(), revision: value.revision, requestId: value.requestId, allowDelayedForecasts: value.allowDelayedForecasts };
+  if (value.transitToken !== undefined && (typeof value.transitToken !== "string" || value.transitToken.length > 10000)) throw new ConditionsError("이동시간 확인 정보를 다시 준비해주세요.");
+  return { ...(value.transitToken ? { transitToken: value.transitToken } : {}), text: value.text.trim(), revision: value.revision, requestId: value.requestId, allowDelayedForecasts: value.allowDelayedForecasts };
 }
 
 export async function POST(request: Request) {
@@ -56,6 +58,7 @@ export async function POST(request: Request) {
     const input = await readInput(request);
     const session = sessionHash((await cookies()).get(AI_COOKIE)?.value);
     if (!session) return json({ error: "요청 세션을 준비한 뒤 다시 시도해주세요." }, 401);
+    const transit = readTransitToken(input.transitToken, session);
     const identity = (stage: string) => callIdentity(session, input.requestId, stage);
     const fingerprint = callIdentity(session, JSON.stringify(input), "input");
     const result = await cached(identity("flow"), fingerprint, () => sharedFlowCache(identity("flow"), fingerprint,
@@ -63,7 +66,7 @@ export async function POST(request: Request) {
       sharedBudgetLedger(requestIpHash(request.headers), identity("flow")), async () => {
         const overview = await getPopulationOverview();
         return { snapshots: overview.rows.flatMap(row => row.snapshot ? [row.snapshot] : []), checkedAt: overview.checkedAt };
-      })));
+      }, undefined, transit)));
     return json(result);
   } catch (error) {
     if (error instanceof ConditionsError) return json({ error: error.message }, 400);

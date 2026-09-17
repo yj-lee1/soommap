@@ -3,11 +3,13 @@ import { useEffect, useRef, useState } from "react";
 import { formatSeoulTime } from "@/lib/data/time";
 import { locationLink, planSummary, selectionUsable, type SelectedPlan } from "@/lib/domain/selection";
 import type { Conditions, Place } from "@/lib/domain/types";
+import { NavigationActions } from "./navigation-actions";
+import type { Origin } from "@/lib/domain/mobility";
 import { TemporalEvidence } from "./temporal-evidence";
 
-export function SelectedPlanPanel({ plan, choice, conditions, places, pending, error, onConfirm, onRecheck, onAdjust }: {
+export function SelectedPlanPanel({ plan, choice, conditions, places, origin, pending, error, onConfirm, onRecheck, onAdjust }: {
   plan: SelectedPlan | null; choice: { placeId: string; arrivalAt: string }; conditions: Conditions; places: Place[];
-  pending: boolean; error: string; onConfirm: () => void; onRecheck: () => void; onAdjust: () => void;
+  origin: Origin | null; pending: boolean; error: string; onConfirm: () => void; onRecheck: () => void; onAdjust: () => void;
 }) {
   const [now, setNow] = useState(() => Date.now()), [accepted, setAccepted] = useState(false);
   const [copyMessage, setCopyMessage] = useState(""), [copyFallback, setCopyFallback] = useState("");
@@ -39,10 +41,10 @@ export function SelectedPlanPanel({ plan, choice, conditions, places, pending, e
       {!candidate.meetsPreference && <label className="checkbox"><input type="checkbox" checked={accepted} onChange={e => setAccepted(e.target.checked)} />혼잡 선호 충족이 불확실하거나 선호를 넘는 예측임을 확인했어요</label>}
       <button disabled={!candidate.meetsPreference && !accepted} onClick={onConfirm}>이 계획 확정</button>
     </div>}
-    {plan?.confirmedAt && <><p>계획을 확정했어요. 이동시간은 아직 반영하지 않았습니다.</p><div className="action-row">
+    {plan?.confirmedAt && <><p>계획을 확정했어요. {candidate?.travel ? `대중교통 약 ${Math.ceil(candidate.travel.totalSeconds / 60)}분이 반영됐어요.` : "이동시간은 반영하지 않은 계획입니다."}</p><div className="action-row">
       <button disabled={!usable} onClick={copy}>계획 문구 복사</button>
-      <a href={locationLink(place)} target="_blank" rel="noreferrer">카카오맵에서 공원 위치 보기</a>
-    </div><p className="note">공원 대표 위치를 표시합니다. 출입구를 기준으로 한 대중교통 길찾기는 다음 이동 단계에서 연결합니다.</p></>}
+      {!origin && <a href={locationLink(place)} target="_blank" rel="noreferrer">카카오맵에서 공원 위치 보기</a>}
+    </div>{origin ? <NavigationActions origin={origin} place={place} /> : <p className="note">위에서 출발지를 선택한 뒤 비교하면 확정 후 출발·도착지가 입력된 길찾기를 이용할 수 있어요.</p>}</>}
     {copyMessage && <p role="status">{copyMessage}</p>}
     {copyFallback && <label>복사할 계획 문구<textarea readOnly rows={9} value={copyFallback} onFocus={e => e.target.select()} /></label>}
     <div className="action-row"><button disabled={pending} onClick={onRecheck}>선택한 계획의 자료 다시 확인</button><button onClick={onAdjust}>다시 조정하기</button></div>

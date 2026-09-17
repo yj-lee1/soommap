@@ -7,7 +7,9 @@ import type { Place, Snapshot, Conditions, Recommendation } from "../domain/type
 import { BudgetError, type BudgetLedger } from "./ai-budget.ts";
 import { structuredAI } from "./structured-ai.ts";
 
-export interface PlanInput { text: string; revision: number; requestId: string; allowDelayedForecasts: boolean }
+import type { TransitContext } from "../domain/mobility.ts";
+
+export interface PlanInput { transitToken?: string; text: string; revision: number; requestId: string; allowDelayedForecasts: boolean }
 export interface AiPlan { conditions: Conditions; result: Recommendation; assumptions: string[]; unsupported: string[];
   explanation: { mode: "ai-selected-evidence" | "rules"; facts: ExplanationFact[] }; notice: string | null }
 
@@ -25,13 +27,14 @@ placeId는 원래 목적지. 장소 변경을 명시 허용했을 때만 placeCh
 
 export async function planFromText(input: PlanInput, places: Place[], nowMs: number, session: string,
   callId: (stage: string) => string, ledger: BudgetLedger, getSnapshots: () => Promise<{ snapshots: Snapshot[]; checkedAt: string }>,
-  generate: typeof structuredAI = structuredAI): Promise<AiPlan> {
-  const parsed = await generate({ name: "outing_conditions", schema: interpretationSchema(places), instructions: INTERPRET_INSTRUCTIONS,
+  generate: typeof structuredAI = structuredAI, transit?: TransitContext): Promise<AiPlan> {
+  const parsed = await generate({ name: "outing_conditions", schema: interpretationSchema(places), instructions: INTERPRET_INSTRUCTIONS + (transit ? "\n현재 화면에서 사용자가 지금 출발·대중교통 자동 도착 계산을 선택했습니다. 지금 출발/곧 출발은 timeKind=soon으로 해석하세요. 별도의 미래 출발시각은 지원하지 않으므로 clarification으로 알려주세요. 일반적인 이동시간 계산은 별도 코드에서 지원하지만 최대 이동시간 같은 필수 제한은 스키마에서 표현할 수 없어 clarification으로 확인하세요. 좌표를 추측하지 마세요." : ""),
     context: JSON.stringify({ nowInSeoul: seoulInputTime(new Date(nowMs).toISOString()), catalog: places.map(p => ({ id: p.id, name: p.name })), request: input.text }),
     outputTokens: 1200, callId: callId("interpret"), sessionHash: session }, ledger);
   const interpreted = conditionsFromInterpretation(parseInterpretation(parsed, places), places, nowMs, input.revision, input.allowDelayedForecasts);
+  if (transit) interpreted.assumptions = interpreted.assumptions.map(s => s.replace("실제 이동시간은 미반영입니다.", "선택한 출발지의 TMAP 이동시간을 적용합니다."));
   const { snapshots, checkedAt } = await getSnapshots();
-  const result = recommend(interpreted.conditions, places, snapshots, Date.parse(checkedAt));
+  const result = recommend(interpreted.conditions, places, snapshots, Date.parse(checkedAt), transit);
   const facts = explanationFacts(result, interpreted.conditions, places);
   let explanation: AiPlan["explanation"] = { mode: "rules", facts: facts.slice(0, 1) }, notice: string | null = null;
   if (facts.length) {

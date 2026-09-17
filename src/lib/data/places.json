@@ -16,12 +16,22 @@
       "riverside",
       "park"
     ],
-    "displayPoint": {
+    "boundaryRef": "/data/hangang-boundaries.geojson#POI105",
+    "enabled": true,
+    "displayCoordinate": {
       "latitude": 37.526517,
       "longitude": 126.93497597770701
     },
-    "boundaryRef": "/data/hangang-boundaries.geojson#POI105",
-    "enabled": true
+    "accessPoint": {
+      "id": "9818",
+      "name": "여의도안내센터",
+      "coordinate": {
+        "latitude": 37.5263976567,
+        "longitude": 126.9335901833
+      },
+      "sourceUrl": "https://hangang.seoul.go.kr/www/facility/map.tab?srchCd=9818",
+      "verifiedAt": "2026-09-17"
+    }
   },
   {
     "id": "banpo",
@@ -40,12 +50,22 @@
       "riverside",
       "park"
     ],
-    "displayPoint": {
+    "boundaryRef": "/data/hangang-boundaries.geojson#POI095",
+    "enabled": true,
+    "displayCoordinate": {
       "latitude": 37.5109785,
       "longitude": 126.99820940887354
     },
-    "boundaryRef": "/data/hangang-boundaries.geojson#POI095",
-    "enabled": true
+    "accessPoint": {
+      "id": "9816",
+      "name": "반포안내센터",
+      "coordinate": {
+        "latitude": 37.507748,
+        "longitude": 126.992744
+      },
+      "sourceUrl": "https://hangang.seoul.go.kr/www/facility/map.tab?srchCd=9816",
+      "verifiedAt": "2026-09-17"
+    }
   },
   {
     "id": "ttukseom",
@@ -64,12 +84,22 @@
       "riverside",
       "park"
     ],
-    "displayPoint": {
+    "boundaryRef": "/data/hangang-boundaries.geojson#POI093",
+    "enabled": true,
+    "displayCoordinate": {
       "latitude": 37.5297315,
       "longitude": 127.06859619761525
     },
-    "boundaryRef": "/data/hangang-boundaries.geojson#POI093",
-    "enabled": true
+    "accessPoint": {
+      "id": "9814",
+      "name": "뚝섬안내센터",
+      "coordinate": {
+        "latitude": 37.529606,
+        "longitude": 127.073121
+      },
+      "sourceUrl": "https://hangang.seoul.go.kr/www/facility/map.tab?srchCd=9814",
+      "verifiedAt": "2026-09-17"
+    }
   },
   {
     "id": "mangwon",
@@ -88,12 +118,22 @@
       "riverside",
       "park"
     ],
-    "displayPoint": {
+    "boundaryRef": "/data/hangang-boundaries.geojson#POI094",
+    "enabled": true,
+    "displayCoordinate": {
       "latitude": 37.5530505,
       "longitude": 126.89869198522274
     },
-    "boundaryRef": "/data/hangang-boundaries.geojson#POI094",
-    "enabled": true
+    "accessPoint": {
+      "id": "9820",
+      "name": "망원안내센터",
+      "coordinate": {
+        "latitude": 37.552353,
+        "longitude": 126.899847
+      },
+      "sourceUrl": "https://hangang.seoul.go.kr/www/facility/map.tab?srchCd=9820",
+      "verifiedAt": "2026-09-17"
+    }
   },
   {
     "id": "nanji",
@@ -112,11 +152,21 @@
       "riverside",
       "park"
     ],
-    "displayPoint": {
+    "boundaryRef": "/data/hangang-boundaries.geojson#POI090",
+    "enabled": true,
+    "displayCoordinate": {
       "latitude": 37.566569,
       "longitude": 126.8766496262704
     },
-    "boundaryRef": "/data/hangang-boundaries.geojson#POI090",
-    "enabled": true
+    "accessPoint": {
+      "id": "9821",
+      "name": "난지안내센터",
+      "coordinate": {
+        "latitude": 37.5627589336,
+        "longitude": 126.8855083215
+      },
+      "sourceUrl": "https://hangang.seoul.go.kr/www/facility/map.tab?srchCd=9821",
+      "verifiedAt": "2026-09-17"
+    }
   }
 ]

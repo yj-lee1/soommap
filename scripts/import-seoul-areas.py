@@ -42,11 +42,14 @@ with zipfile.ZipFile(sys.argv[1]) as archive:
                        "geometry": geometry},
                       {"id": place_id, "name": name, "source": {"provider": "seoul-city", "areaCode": code},
                        "groupIds": ["hangang_walk"], "activities": ["walk"], "settings": ["riverside", "park"],
-                       "displayPoint": {"latitude": point.y, "longitude": point.x},
+                       "displayCoordinate": {"latitude": point.y, "longitude": point.x},
                        "boundaryRef": "/data/hangang-boundaries.geojson#" + code, "enabled": True})
 if set(found) != set(NAMES):
     raise ValueError("Expected five verified areas")
 Path("public/data/hangang-boundaries.geojson").write_text(json.dumps(
     {"type": "FeatureCollection", "features": [found[code][0] for code in NAMES]}, ensure_ascii=False))
+existing_places = {p["id"]: p for p in json.loads(Path("src/lib/data/places.json").read_text())}
+for _, place in found.values():
+    place["accessPoint"] = existing_places[place["id"]]["accessPoint"]
 Path("src/lib/data/places.json").write_text(json.dumps([found[code][1] for code in NAMES], ensure_ascii=False, indent=2) + "\n")
 print("Extracted 5 official boundaries and interior display points; no API calls.")

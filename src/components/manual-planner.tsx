@@ -12,6 +12,9 @@ import { AdjustmentControls } from "./adjustment-controls";
 import { SelectedPlanPanel } from "./selected-plan";
 import { TemporalEvidence } from "./temporal-evidence";
 
+import { OriginControls } from "./origin-controls";
+import type { Origin, TransitBundle } from "@/lib/domain/mobility";
+
 function changeText(candidate: Candidate, names: Map<string, string>, c: Conditions) {
   const parts: string[] = [];
   if (candidate.change.placeChanged === true) parts.push(`장소: ${names.get(c.originalPlan.placeId!)} → ${names.get(candidate.placeId)}`);
@@ -22,7 +25,7 @@ function changeText(candidate: Candidate, names: Map<string, string>, c: Conditi
   return parts.join(" · ");
 }
 
-export function ManualPlanner({ overview }: { overview: PopulationOverview }) {
+export function ManualPlanner({ overview, mobilityReady }: { overview: PopulationOverview; mobilityReady: boolean }) {
   const places = overview.rows.map(row => row.place);
   const names = new Map(places.map(p => [p.id, p.name]));
   const times = [...new Set(overview.rows.flatMap(row => row.quality?.futureForecasts.map(p => p.at) ?? []))].sort();
@@ -31,6 +34,10 @@ export function ManualPlanner({ overview }: { overview: PopulationOverview }) {
     allowPlaceChange: false, allowedPlaceIds: places.map(p => p.id), timeMode: "fixed", windowStart: seoulInputTime(firstArrival),
     windowEnd: seoulInputTime(new Date(Date.parse(firstArrival) + 60 * 60_000).toISOString()),
     maximumCongestion: "보통", ranking: "minimum-change", allowDelayedForecasts: false }));
+  const [origin, setOrigin] = useState<Origin | null>(null), [automatic, setAutomatic] = useState(false);
+  const [transit, setTransit] = useState<TransitBundle | null>(null);
+  const transitRef = useRef<TransitBundle | null>(null);
+  function storeTransit(value: TransitBundle | null) { transitRef.current = value; setTransit(value); }
   const [response, setResponse] = useState<{ conditions: Conditions; result: Recommendation } | null>(null);
   const [aiPlan, setAiPlan] = useState<AiPlan | null>(null);
   const [text, setText] = useState("");
@@ -71,13 +78,32 @@ export function ManualPlanner({ overview }: { overview: PopulationOverview }) {
       await compare(conditions, version);
     } catch (e) { setError(e instanceof Error ? e.message : "입력 조건을 확인해주세요."); }
   }
+  async function prepareTransit(ids: string[], signal: AbortSignal): Promise<TransitBundle | null> {
+    if (!automatic) return null;
+    if (!origin) throw new Error("출발지를 먼저 선택해주세요. 현재 위치 또는 출발역 검색을 이용할 수 있어요.");
+    const existing = transitRef.current;
+    if (existing) {
+      if (Date.parse(existing.context.expiresAt) <= Date.now()) throw new Error("출발 기준이 만료됐어요. ‘출발 기준 다시 계산’을 눌러주세요.");
+      if (ids.every(id => existing.context.routes.some(r => r.placeId === id) || existing.context.unavailable.some(r => r.placeId === id))) return existing;
+    }
+    if (!ids.length) throw new Error("비교할 공원을 먼저 선택해주세요.");
+    const session = await fetch("/api/plan", { cache: "no-store", signal });
+    if (!session.ok) throw new Error("출발지 확인 연결을 준비하지 못했어요.");
+    const http = await fetch("/api/transit", { method: "POST", headers: { "Content-Type": "application/json" }, cache: "no-store", signal,
+      body: JSON.stringify({ origin, placeIds: ids }) });
+    const data = await http.json();
+    if (!http.ok) throw new Error(data.error || "이동시간을 계산하지 못했어요.");
+    if (signal.aborted) throw new Error("요청이 변경됐어요.");
+    storeTransit(data); return data;
+  }
   async function compare(conditions: Conditions, version: number) {
     active.current?.abort(); const controller = new AbortController(); active.current = controller;
     setError(""); setAiPending(false); setPending(true);
-    const timeout = setTimeout(() => controller.abort(), 20_000);
+    const timeout = setTimeout(() => controller.abort(), 30_000);
     try {
+      const mobility = await prepareTransit(conditions.hard.allowedPlaceIds?.filter(id => !conditions.hard.excludedPlaceIds.includes(id) && (!conditions.hard.pinnedPlaceId || conditions.hard.pinnedPlaceId === id)) ?? [], controller.signal);
       const http = await fetch("/api/recommendations", { method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(conditions), signal: controller.signal, cache: "no-store" });
+        body: JSON.stringify({ conditions, transitToken: mobility?.token }), signal: controller.signal, cache: "no-store" });
       const data = await http.json();
       if (version !== sequence.current) return;
       if (!http.ok) throw new Error(typeof data.error === "string" ? data.error : "비교를 완료하지 못했어요.");
@@ -106,7 +132,7 @@ export function ManualPlanner({ overview }: { overview: PopulationOverview }) {
     const timeout = setTimeout(() => controller.abort(), 20_000);
     try {
       const http = await fetch("/api/selection", { method: "POST", headers: { "Content-Type": "application/json" }, signal: controller.signal, cache: "no-store",
-        body: JSON.stringify({ conditions: response.conditions, choice: nextChoice }) });
+        body: JSON.stringify({ conditions: response.conditions, choice: nextChoice, transitToken: automatic ? transitRef.current?.token : undefined }) });
       const data = await http.json();
       if (version !== selectionSequence.current) return;
       if (!http.ok) throw new Error(data.error || "선택한 계획의 자료를 확인하지 못했어요.");
@@ -115,8 +141,8 @@ export function ManualPlanner({ overview }: { overview: PopulationOverview }) {
         throw new Error("선택한 계획과 응답이 다릅니다. 다시 확인해주세요.");
       }
       setSelected(updateSelection(previous, check));
-    } catch {
-      if (version === selectionSequence.current) { setSelected(previous ? { ...previous, confirmedAt: null } : null); setSelectionError("선택은 유지했지만 자료를 확인하지 못했어요. 다시 확인해주세요."); }
+    } catch (e) {
+      if (version === selectionSequence.current) { setSelected(previous ? { ...previous, confirmedAt: null } : null); setSelectionError(e instanceof Error && e.name !== "TypeError" && e.name !== "AbortError" ? e.message : "선택은 유지했지만 자료를 확인하지 못했어요. 다시 확인해주세요."); }
     } finally { clearTimeout(timeout); if (version === selectionSequence.current) setSelectionPending(false); }
   }
   function confirmSelected() {
@@ -134,10 +160,11 @@ export function ManualPlanner({ overview }: { overview: PopulationOverview }) {
     setError(""); setErrorScope("ai"); setResponse(null); setAiPlan(null); setPending(true); setAiPending(true);
     const timeout = setTimeout(() => controller.abort(), 60_000);
     try {
+      const mobility = await prepareTransit(places.map(p => p.id), controller.signal);
       const session = await fetch("/api/plan", { cache: "no-store", signal: controller.signal });
       if (!session.ok) throw new Error("AI 연결을 준비하지 못했어요. 아래에서 조건을 직접 입력할 수 있어요.");
       const http = await fetch("/api/plan", { method: "POST", headers: { "Content-Type": "application/json" }, signal: controller.signal,
-        cache: "no-store", body: JSON.stringify({ text, revision: version, requestId: crypto.randomUUID(), allowDelayedForecasts: draft.allowDelayedForecasts }) });
+        cache: "no-store", body: JSON.stringify({ text, transitToken: mobility?.token, revision: version, requestId: crypto.randomUUID(), allowDelayedForecasts: draft.allowDelayedForecasts }) });
       const data = await http.json();
       if (version !== sequence.current) return;
       if (!http.ok) throw new Error(typeof data.error === "string" ? data.error : "조건을 해석하지 못했어요.");
@@ -151,13 +178,21 @@ export function ManualPlanner({ overview }: { overview: PopulationOverview }) {
   const result = response?.result, applied = response?.conditions;
   const resultCurrent = applied?.revision === revision && !pending;
   return <>
+    <OriginControls origin={origin} automatic={automatic} transit={transit?.context ?? null} disabled={pending} mobilityReady={mobilityReady}
+      onOrigin={value => { setOrigin(value); storeTransit(null); update({}); }}
+      onMode={value => {
+        setAutomatic(value); storeTransit(null);
+        const start = new Date(Math.ceil(Date.now() / 60_000) * 60_000).toISOString();
+        update(value ? { arrival: "", timeMode: "custom", windowStart: seoulInputTime(start), windowEnd: seoulInputTime(new Date(Date.parse(start) + 180 * 60_000).toISOString()) } : {});
+      }}
+      onReset={() => { storeTransit(null); update({}); }} />
     <section className="panel" aria-labelledby="natural-title">
       <h2 id="natural-title">어떤 외출을 생각하고 있나요?</h2>
       <form onSubmit={submitText}>
         <label htmlFor="outing-text">원하는 계획<textarea id="outing-text" required maxLength={1200} rows={4} value={text}
           placeholder="오늘 저녁 7~9시 사이에 한 시간 산책하고 싶어. 목적지는 아직 못 정했고 보통보다 붐비면 싫어."
           onChange={e => { setText(e.target.value); update({}); }} /></label>
-        <p className="note">현재 한강공원 5곳의 산책을 지원해요. 이동시간·소음은 아직 평가하지 않습니다. 입력한 문장은 조건 해석을 위해 OpenAI로 전송됩니다.</p>
+        <p className="note">현재 한강공원 5곳의 산책을 지원해요. 소음은 평가하지 않습니다. 위에서 자동 도착 계산을 선택하면 대중교통 이동시간을 반영해요. 입력한 문장은 조건 해석을 위해 OpenAI로 전송됩니다.</p>
         <button type="submit" disabled={pending || !text.trim()}>{aiPending ? "계획을 해석하고 예측 비교 중…" : "말로 계획 비교하기"}</button>
         <p className="note" role="status">{aiPending ? "조건을 해석한 뒤 실제 예측으로 계산하고 있어요. 잠시만 기다려주세요." : "해석한 조건은 아래에서 직접 수정할 수 있어요."}</p>
       </form>
@@ -176,7 +211,7 @@ export function ManualPlanner({ overview }: { overview: PopulationOverview }) {
         <button aria-pressed={!!draft.placeId} onClick={() => update({ placeId: draft.placeId || places[0].id })}>목적지를 정했어요</button>
         <button aria-pressed={!draft.placeId} onClick={() => update({ placeId: "", arrival: "", allowPlaceChange: true, timeMode: "custom" })}>아직 못 정했어요</button>
       </div>
-      {!draft.placeId && <p className="note">갈 수 있는 공원과 방문 시간대를 골라주세요. 도착시각을 계산할 필요는 없어요. 아래 시간 범위는 수정 가능한 제안이며 이동시간은 아직 반영하지 않습니다.</p>}
+      {!draft.placeId && !automatic && <p className="note">갈 수 있는 공원과 방문 시간대를 골라주세요. 도착시각을 계산할 필요는 없어요. 아래 시간 범위는 수정 가능한 제안이며 이동시간은 아직 반영하지 않습니다.</p>}
       {replanning && <p className="note">아래 입력은 처음 비교 조건입니다. 입력을 수정하면 추가 고정·제외와 확정 상태가 초기화되고 새 조건으로 비교합니다.</p>}
       <form onSubmit={submit}>
         <fieldset><legend>{draft.placeId ? "원래 계획" : "처음 정할 조건"}</legend>
@@ -185,7 +220,7 @@ export function ManualPlanner({ overview }: { overview: PopulationOverview }) {
               <option value="">아직 못 정했어요</option>
               {places.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select></label>
-            <label>원래 도착 시각<input type="datetime-local" step="60" value={draft.arrival} onChange={e => update({ arrival: e.target.value })} /></label>
+            {(!automatic || draft.arrival) && <label>원래 도착 시각<input type="datetime-local" step="60" value={draft.arrival} onChange={e => update({ arrival: e.target.value })} /></label>}
             <label>머무는 시간 (분, 선택)<input type="number" min="15" max="240" step="1" value={draft.duration} onChange={e => update({ duration: e.target.value })} /></label>
           </div>
           <p className="note">머무는 시간을 입력하면 종료까지의 예측 표본을 함께 비교해요. 비워두면 도착시각만 비교합니다. 도착시각이 미정이면 허용 범위를 직접 정해주세요.</p>
@@ -196,7 +231,7 @@ export function ManualPlanner({ overview }: { overview: PopulationOverview }) {
             {places.map(p => <label className="checkbox" key={p.id}><input type="checkbox" checked={draft.allowedPlaceIds.includes(p.id) && !draft.excludedPlaceIds?.includes(p.id)}
               onChange={e => update({ allowedPlaceIds: e.target.checked ? [...new Set([...draft.allowedPlaceIds, p.id])] : draft.allowedPlaceIds.filter(id => id !== p.id),
                 excludedPlaceIds: e.target.checked ? draft.excludedPlaceIds?.filter(id => id !== p.id) : draft.excludedPlaceIds })} />{p.name}</label>)}
-            <p className="note">갈 수 있는 공원만 선택해주세요. 실제 이동시간은 계산하지 않아요.</p>
+            <p className="note">갈 수 있는 공원만 선택해주세요. 자동 도착 계산에서는 선택한 출발지의 대중교통 예상시간을 함께 비교해요.</p>
           </div>}
           <label>도착 시각 변경<select value={draft.timeMode} onChange={e => update({ timeMode: e.target.value as ManualDraft["timeMode"] })}>
             <option value="fixed">원래 도착 시각 그대로</option><option value="later-60">최대 1시간 늦어도 괜찮아요</option>
@@ -207,6 +242,7 @@ export function ManualPlanner({ overview }: { overview: PopulationOverview }) {
             <label>가장 늦은 도착<input required type="datetime-local" step="60" value={draft.windowEnd} onChange={e => update({ windowEnd: e.target.value })} /></label>
           </div>}
           <p className="note">‘늦어도 괜찮아요’는 도착을 앞당기지 않습니다. 시각 사이에서는 60분 이내 간격의 전후 예측을 참고하고, 인구만 숨맵 추정으로 보간해요.</p>
+          {automatic && <p className="note">자동 모드의 초기 범위는 지금부터 3시간이며 위에서 바꿀 수 있어요. 입력한 도착 범위·고정 조건은 그대로 지켜요. 도착부터 머무는 시간 전체의 예측이 있어야 추천합니다. 이동시간 계산과 고정 시각이 다르면 해당 안을 추천하지 않아요.</p>}
         </fieldset>
         <fieldset><legend>선호하는 비교</legend><div className="form-grid">
           <label>혼잡 선호<select value={draft.maximumCongestion} onChange={e => update({ maximumCongestion: e.target.value as ManualDraft["maximumCongestion"] })}>
@@ -216,7 +252,7 @@ export function ManualPlanner({ overview }: { overview: PopulationOverview }) {
           <label>비교 기준<select value={draft.ranking} onChange={e => update({ ranking: e.target.value as ManualDraft["ranking"] })}>
             <option value="minimum-change">계획 변경 최소</option><option value="less-crowded">덜 붐빔 우선</option>
           </select></label>
-        </div><p className="note">체류 구간의 평가 표본이 모두 혼잡 선호 이내인 안을 우선해요. ‘변경 최소’는 그 안에서 변경 항목 수 → 장소 유지 → 시간 차이 순으로 비교합니다. 필수 조건을 자동으로 풀지 않습니다.</p></fieldset>
+        </div><p className="note">체류 구간의 평가 표본이 모두 혼잡 선호 이내인 안을 우선해요. ‘변경 최소’는 그 안에서 변경 항목 수 → 장소 유지 → 시간 차이 순으로 비교하며, 자동 도착 계산에서는 이어서 이동시간을 비교합니다. 필수 조건을 자동으로 풀지 않습니다.</p></fieldset>
         <fieldset><legend>자료 기준 확인</legend>
           <p className="note">30분이 넘은 관측은 현재 상태로 취급하지 않아요. 30~60분 전 원자료에 포함된 미래 예측은 아래 항목을 선택한 경우에만 참고 비교합니다. 60분 초과·대체 자료·수신 지연 자료는 제외해요.</p>
           <label className="checkbox"><input type="checkbox" checked={draft.allowDelayedForecasts} onChange={e => update({ allowDelayedForecasts: e.target.checked })} />지연 예측 참고 비교를 허용해요</label>
@@ -233,7 +269,7 @@ export function ManualPlanner({ overview }: { overview: PopulationOverview }) {
       }}>현재 조정 조건으로 다시 비교</button>}
     </>}
     {choice && applied && <SelectedPlanPanel key={`${choice.placeId}:${choice.arrivalAt}:${selected?.check.checkedAt ?? "pending"}`} plan={selected} choice={choice} conditions={applied}
-      places={places} pending={selectionPending} error={selectionError} onConfirm={confirmSelected} onRecheck={() => void checkSelected(choice, selected)} onAdjust={clearSelection} />}
+      places={places} origin={origin} pending={selectionPending} error={selectionError} onConfirm={confirmSelected} onRecheck={() => void checkSelected(choice, selected)} onAdjust={clearSelection} />}
     {result && applied && <section className="results" aria-labelledby="result-title" aria-live="polite" aria-busy={pending}>
       <div className="panel"><h2 id="result-title">{result.status === "ready" ? "조건에 맞는 비교 결과" : result.status === "preference-uncertain" ? "혼잡 선호 충족이 불확실한 결과" : result.status === "preference-unmet" ? "혼잡 선호에 못 미치는 결과" : "비교를 완료하지 못했어요"}</h2>
         {!resultCurrent && <p className="notice">이전 조건의 결과입니다. 새 비교가 완료되어야 선택할 수 있어요.</p>}
@@ -257,7 +293,7 @@ export function ManualPlanner({ overview }: { overview: PopulationOverview }) {
           <p className="eyebrow">{title}{!option.eligible ? " · 비교 제외" : c?.dataConfidence === "delayed" ? " · 지연 예측 참고" : ""}</p>
           <h3>{c ? names.get(c.placeId) : names.get(applied.originalPlan.placeId!)}</h3>
           <p>{c?.arrivalAt || applied.originalPlan.preferredArrivalAt ? `${formatSeoulTime(c?.arrivalAt ?? applied.originalPlan.preferredArrivalAt!)} 도착` : "도착시각 미정"} · {applied.originalPlan.durationMinutes ? `${applied.originalPlan.durationMinutes}분 머물기` : "도착 기준 비교"}</p>
-          {c ? <><TemporalEvidence candidate={c} />
+          {c ? <>{c.travel && <p><strong>대중교통 약 {Math.ceil(c.travel.totalSeconds / 60)}분</strong> · 도보 {Math.ceil(c.travel.walkingSeconds / 60)}분 포함 · 환승 {c.travel.transfers}회<br />{places.find(p => p.id === c.placeId)?.accessPoint.name} 도착 기준</p>}<TemporalEvidence candidate={c} />
             <p>{changeText(c, names, applied)}</p>
             <p className="note">원자료 기준 {formatSeoulTime(c.sourceUpdatedAt)} · 수신 {formatSeoulTime(c.fetchedAt)}<br />계산 시점 기준 {Math.max(0, Math.floor((Date.parse(result.checkedAt) - Date.parse(c.sourceUpdatedAt)) / 60_000))}분 전 자료</p>
           </> : <p>해당 시각 예측을 확인할 수 없어요.</p>}

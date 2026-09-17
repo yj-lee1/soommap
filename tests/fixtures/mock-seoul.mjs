@@ -17,9 +17,18 @@ globalThis.fetch = async (input, options) => {
       if (command.includes("NX") && redis.has(command[1])) return Response.json({ result: null });
       redis.set(command[1], command[2]); return Response.json({ result: "OK" });
     }
+    if (command[0] === "DEL") return Response.json({ result: redis.delete(command[1]) ? 1 : 0 });
     // UI smoke only; actual atomic Lua is tested against isolated real Redis keys.
-    if (command[0] === "EVAL") return Response.json({ result: [command[1].includes("local cap") ? "reserved" : "settled", "50000"] });
+    if (command[0] === "EVAL") return Response.json({ result: command[1].includes("5000 then") ? (state.transitQuota ? "quota" : "ok") : [command[1].includes("local cap") ? "reserved" : "settled", "50000"] });
     throw new Error("unexpected_fixture_redis_command");
+  }
+  if (state.transit && url.hostname === "apis.openapi.sk.com") {
+    appendFileSync(prefix + ".calls", "transit\n");
+    if (state.transitDelayMs) await new Promise(resolve => setTimeout(resolve, Math.min(state.transitDelayMs, 3000)));
+    if (state.transitFail) return Response.json({ result: { status: 14 } });
+    const body = JSON.parse(options.body);
+    const index = places.findIndex(p => String(p.accessPoint.coordinate.longitude) === body.endX);
+    return Response.json({ metaData: { plan: { itineraries: [{ pathType: 3, totalTime: (state.transitMinutes ?? 70) * 60 + index * 120, totalWalkTime: 600, transferCount: 1 }] } } });
   }
   if (state.ai && url.hostname === "api.openai.com") {
     const body = JSON.parse(options.body), name = body.text.format.name;

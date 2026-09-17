@@ -18,12 +18,13 @@ export function parseChoice(value: unknown, places: Place[]): { placeId: string;
 }
 export function selectionUsable(check: SelectionCheck, revision: number, nowMs: number): boolean {
   const candidate = check.candidate;
+  if (candidate?.travel && Date.parse(candidate.travel.expiresAt) <= nowMs) return false;
   if (!candidate || nowMs - Date.parse(candidate.sourceUpdatedAt) > (candidate.dataConfidence === "fresh" ? DATA_POLICY.freshMinutes : DATA_POLICY.displayMaxMinutes) * 60_000 ||
     nowMs - Date.parse(candidate.fetchedAt) > DATA_POLICY.cacheGraceMinutes * 60_000) return false;
   return check.eligible && check.candidate !== null && check.conditionsRevision === revision &&
     Date.parse(check.choice.arrivalAt) > nowMs && nowMs >= Date.parse(check.checkedAt) - 60_000 && nowMs - Date.parse(check.checkedAt) <= SELECTION_MAX_AGE_MS;
 }
-const fingerprint = (c: Candidate | null) => c ? JSON.stringify({ arrival: c.arrival, visit: c.visit, confidence: c.dataConfidence,
+const fingerprint = (c: Candidate | null) => c ? JSON.stringify({ arrival: c.arrival, visit: c.visit, confidence: c.dataConfidence, travel: c.travel,
   evidence: c.visit.evidence.map(p => ({ at: p.at, congestion: p.congestion, populationRange: p.populationRange })) },
   (key, value) => key === "id" || key === "evidenceIds" ? undefined : value) : null;
 export function updateSelection(previous: SelectedPlan | null, check: SelectionCheck): SelectedPlan {
@@ -34,7 +35,7 @@ export function updateSelection(previous: SelectedPlan | null, check: SelectionC
       ? "선택한 장소와 시각의 전망을 다시 확인했어요. 평가 내용은 같아요." : "예측 내용이나 자료 최신성 상태가 달라졌어요. 선택은 유지했으니 새 근거를 확인한 뒤 다시 확정해주세요." };
 }
 export function locationLink(place: Place): string {
-  return `https://map.kakao.com/link/map/${encodeURIComponent(place.name)},${place.displayPoint.latitude},${place.displayPoint.longitude}`;
+  return `https://map.kakao.com/link/map/${encodeURIComponent(place.name)},${place.displayCoordinate.latitude},${place.displayCoordinate.longitude}`;
 }
 export function planSummary(plan: SelectedPlan, conditions: Conditions, places: Place[]): string {
   const c = plan.check.candidate;
@@ -46,6 +47,7 @@ export function planSummary(plan: SelectedPlan, conditions: Conditions, places: 
     c.visit.preference === "supported" ? "평가 표본은 설정한 혼잡 선호 이내" : "혼잡 선호 충족이 불확실하거나 선호를 넘는 표본 포함",
     `자료 확인 ${formatSeoulTime(plan.check.checkedAt)} · 원자료 ${formatSeoulTime(c.sourceUpdatedAt)}`];
   if (c.dataConfidence === "delayed") lines.push("30~60분 전 원자료의 미래 예측을 참고한 계획");
-  lines.push("실제 혼잡은 달라질 수 있어요. 이동시간 미반영.", `공원 대표 위치: ${locationLink(place)}`);
+  if (c.travel) lines.push(`대중교통 약 ${Math.ceil(c.travel.totalSeconds / 60)}분 (도보 포함) · ${place.accessPoint.name} 기준`);
+  lines.push(c.travel ? "실제 혼잡·이동시간은 달라질 수 있어요." : "실제 혼잡은 달라질 수 있어요. 이동시간 미반영.", `공원 대표 위치: ${locationLink(place)}`);
   return lines.join("\n");
 }

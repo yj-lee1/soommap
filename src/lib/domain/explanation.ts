@@ -15,6 +15,7 @@ export function explanationFacts(result: Recommendation, conditions: Conditions,
     { id: "preference", text: candidate.visit.preference === "supported" ? "평가에 사용한 전후·체류 예측 표본이 모두 설정한 혼잡 선호 이내입니다. 실제 방문 내내 같은 상태라는 보장은 아니에요." :
       candidate.visit.preference === "uncertain" ? "방문 경계의 전후 예측 단계가 달라 혼잡 선호 충족을 확정할 수 없어요." : "평가 표본에 설정한 혼잡 선호를 넘는 단계가 포함되어 있어요.", evidenceIds },
   ];
+  if (candidate.travel) facts.push({ id: "travel", text: `대중교통 예상 이동 ${Math.ceil(candidate.travel.totalSeconds / 60)}분이며 도보 ${Math.ceil(candidate.travel.walkingSeconds / 60)}분이 포함돼요. 실제 운행과 이동시간은 지도 앱에서 다시 확인해주세요.`, evidenceIds });
   if (result.explanation.tradeoff) facts.push({ id: "tradeoff", text: result.explanation.tradeoff, evidenceIds });
   if (candidate.arrival.kind === "between") facts.push({ id: "between", text: "도착시각 양쪽의 서울시 예측을 함께 참고했어요. 인구 범위의 보간값은 숨맵 추정이며 혼잡 단계는 보간하지 않았어요.", evidenceIds });
   if (conditions.originalPlan.durationMinutes !== null) facts.push({ id: "stay", text: `${conditions.originalPlan.durationMinutes}분 머무는 구간과 그 경계를 둘러싼 예측 표본을 함께 평가했어요.`, evidenceIds });

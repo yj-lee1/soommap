@@ -22,8 +22,8 @@ test("five catalog codes match the official spatial data", () => {
     const feature = geo.features.find((f: { id: string }) => f.id === p.source.areaCode);
     assert.equal(feature.properties.name, p.name);
     assert.ok(p.boundaryRef.endsWith(p.source.areaCode));
-    assert.ok(p.displayPoint.latitude > 37 && p.displayPoint.latitude < 38);
-    assert.ok(p.displayPoint.longitude > 126 && p.displayPoint.longitude < 128);
+    assert.ok(p.displayCoordinate.latitude > 37 && p.displayCoordinate.latitude < 38);
+    assert.ok(p.displayCoordinate.longitude > 126 && p.displayCoordinate.longitude < 128);
   }
 });
 

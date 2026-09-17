@@ -6,12 +6,12 @@ function encryptionKey() {
   if (!process.env.AI_API_KEY) throw new BudgetError("unconfigured");
   return createHash("sha256").update(`soommap-private-cache-v1:${process.env.AI_API_KEY}`).digest();
 }
-function seal(value: unknown) {
+export function seal(value: unknown) {
   const nonce = randomBytes(12), cipher = createCipheriv("aes-256-gcm", encryptionKey(), nonce);
   const ciphertext = Buffer.concat([cipher.update(JSON.stringify(value), "utf8"), cipher.final()]);
   return Buffer.concat([nonce, cipher.getAuthTag(), ciphertext]).toString("base64");
 }
-function unseal(value: string): unknown {
+export function unseal(value: string): unknown {
   const bytes = Buffer.from(value, "base64");
   const decipher = createDecipheriv("aes-256-gcm", encryptionKey(), bytes.subarray(0, 12));
   decipher.setAuthTag(bytes.subarray(12, 28));
