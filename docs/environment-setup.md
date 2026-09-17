@@ -40,6 +40,8 @@ git -c credential.helper= -c 'credential.helper=!gh auth git-credential' push or
 
 검수 기본 호스팅은 사용자가 선택한 Vercel이다. 키는 Preview 서버 환경에만 전달하며 `NEXT_PUBLIC_` 접두사를 사용하지 않는다. `.vercel`·`.env*`·로컬 검사 기록은 Git과 배포 소스에서 제외한다. 최초 프로젝트 연결은 GitHub 자동 연결에 실패했으므로 검수 배포는 CLI를 사용한다. 최종 Production 배포와 `main` 변경은 이후 완성본 승인 범위다.
 
+현재 검수 배포: [Preview cf1a9da](https://soommap-bw5rpvo7n-yeongjis-projects-f12fc56b.vercel.app). 계정 범위 `yeongjis-projects-f12fc56b`, 프로젝트 `soommap`, 요금제 Hobby. 이후 `npx --yes vercel@59.20.0 deploy --target=preview --yes --scope yeongjis-projects-f12fc56b`로 검수 배포한다. CLI 로그뿐 아니라 실제 배포 환경을 확인한다. 첫 배포의 자동 Production 승격은 발견 즉시 정리했으며 현재 Preview만 유지한다. 새 프로젝트 생성 시 같은 현상이 재발할 수 있으므로 최종 승인 전 프로젝트를 재생성하지 않는다. 검수 주소는 버전마다 새로 생성되므로 해당 단계 보고의 URL을 사용한다.
+
 ## 호스팅 이전
 
 - 앱은 표준 Next.js Node 런타임, `Request`/`Response`, `fetch`만 사용한다. Vercel 전용 SDK·Gateway·KV·Blob·Cron 의존성은 없다.

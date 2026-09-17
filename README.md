@@ -2,8 +2,9 @@
 
 내 조건을 지키며 덜 붐비는 외출 계획을 찾고 조정하는 웹 서비스.
 
-현재 **0단계: 개발 환경·연동 준비** 중입니다. 실제 공원 데이터나 AI 추천을 제공하는 완성 서비스가 아닙니다.
+현재 **0단계: 개발 환경·실제 연동·검수 배포 확인 완료, 사용자 검수 대기**입니다. 실제 공원 데이터나 AI 추천을 제공하는 완성 서비스가 아닙니다.
 
+- [0단계 검수 보고·공개 URL](docs/reviews/stage-0.md)
 - [실행 계획](docs/soommap-execution-plan.md)
 - [진행·검수 기록](docs/soommap-progress.md)
 - [환경 설정](docs/environment-setup.md)
