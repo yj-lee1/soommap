@@ -32,6 +32,7 @@ test("origin validation bounds coordinates and link formats use the same verifie
     assert.equal(n.searchParams.get("slat"), String(origin.latitude));
     assert.equal(n.searchParams.get("dlng"), String(place.accessPoint.coordinate.longitude));
     assert.equal(n.searchParams.get("sname"), "홍대 / 서울 & #역");
+    assert.ok(!links.naver.includes("+")); // Native URL parsers need percent-encoded spaces.
     assert.equal(n.searchParams.get("appname"), "https://example.com");
     assert.equal(k.searchParams.get("ep"), `${place.accessPoint.coordinate.latitude},${place.accessPoint.coordinate.longitude}`);
     assert.equal(k.searchParams.get("by"), "publictransit"); assert.ok(links.kakaoWeb.includes("/link/by/traffic/"));

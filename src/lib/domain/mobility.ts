@@ -32,7 +32,7 @@ export function routeReasons(context: TransitContext, place: Place, at: string, 
 export function navigationLinks(origin: Origin, place: Place, appUrl: string) {
   const end = place.accessPoint.coordinate, endName = `${place.name} ${place.accessPoint.name}`;
   const params = new URLSearchParams({ slat: String(origin.latitude), slng: String(origin.longitude), sname: origin.name,
-    dlat: String(end.latitude), dlng: String(end.longitude), dname: endName, appname: appUrl });
+    dlat: String(end.latitude), dlng: String(end.longitude), dname: endName, appname: appUrl }).toString().replace(/\+/g, "%20");
   const naver = `nmap://route/public?${params}`;
   const kakaoParams = new URLSearchParams({ sp: `${origin.latitude},${origin.longitude}`, ep: `${end.latitude},${end.longitude}`, by: "publictransit" });
   return {
