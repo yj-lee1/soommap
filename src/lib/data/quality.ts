@@ -16,6 +16,15 @@ export function assessSnapshot(snapshot: Snapshot, nowMs: number) {
   };
 }
 
+// Observation freshness and permission to compare provided future estimates are
+// separate. Delayed estimates require explicit user opt-in; never call them live.
+export function forecastUse(snapshot: Snapshot, nowMs: number): "fresh" | "delayed" | "blocked" {
+  const quality = assessSnapshot(snapshot, nowMs);
+  if (quality.refreshOverdue || quality.freshness === "stale" || snapshot.isReplacement !== false ||
+    !snapshot.forecastAvailable || !quality.futureForecasts.length) return "blocked";
+  return quality.freshness === "fresh" ? "fresh" : "delayed";
+}
+
 export function commonForecastTimes(snapshots: Snapshot[], nowMs: number): string[] {
   if (!snapshots.length) return [];
   const sets = snapshots.map(snapshot => new Set(assessSnapshot(snapshot, nowMs).futureForecasts.map(p => p.at)));

@@ -68,6 +68,7 @@ export interface Conditions {
     maximumPreferredCongestion: CongestionLevel;
     ranking: "minimum-change" | "less-crowded";
   };
+  dataPolicy: { allowDelayedForecasts: boolean };
 }
 
 export interface Candidate {
@@ -77,6 +78,10 @@ export interface Candidate {
   congestion: CongestionLevel;
   snapshotId: string;
   evidenceIds: string[];
+  sourceUpdatedAt: IsoDateTime;
+  fetchedAt: IsoDateTime;
+  dataConfidence: "fresh" | "delayed" | "blocked";
+  meetsPreference: boolean;
   change: {
     placeChanged: boolean | null;
     arrivalDeltaMinutes: number | null;
@@ -84,12 +89,23 @@ export interface Candidate {
 }
 
 export interface Recommendation {
+  checkedAt: IsoDateTime;
   conditionsRevision: number;
   snapshotIds: string[];
-  status: "ready" | "needs-clarification" | "no-candidates" | "data-unavailable";
+  status: "ready" | "preference-unmet" | "needs-clarification" | "no-candidates" | "data-unavailable" | "forecast-unavailable";
+  message: string;
   recommendedCandidateId: string | null;
   alternativeCandidateIds: string[];
   candidates: Candidate[];
   explanation: { reason: string; tradeoff: string; evidenceIds: string[] } | null;
   limitations: string[];
+  options: Array<{
+    role: "recommended" | "alternative" | "original";
+    candidate: Candidate | null;
+    eligible: boolean;
+    reasons: string[];
+  }>;
+  excludedPlaces: Array<{ placeId: PlaceId; reasons: string[] }>;
+  availableForecastTimes: IsoDateTime[];
+  eligibleCount: number;
 }

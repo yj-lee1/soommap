@@ -5,7 +5,7 @@ export async function GET() {
     {
       status: "ok",
       service: "soommap",
-      stage: "data-foundation",
+    stage: "recommendation-engine",
       checkedAt: new Date().toISOString(),
       integrationsVerified: false,
     },

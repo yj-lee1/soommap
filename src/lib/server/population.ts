@@ -45,3 +45,5 @@ export async function getPopulationOverview() {
       commonForecastTimes(snapshots, nowMs).length > 0,
   };
 }
+
+export type PopulationOverview = Awaited<ReturnType<typeof getPopulationOverview>>;

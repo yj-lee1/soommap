@@ -18,7 +18,9 @@ globalThis.fetch = async (input) => {
   const body = structuredClone(sample), row = body["SeoulRtd.citydata_ppltn"][0];
   row.AREA_CD = areaCode; row.AREA_NM = place.name;
   const now = Date.now();
-  row.PPLTN_TIME = toKst(now - 5 * 60_000);
-  row.FCST_PPLTN = row.FCST_PPLTN.map((p, i) => ({ ...p, FCST_TIME: toKst(now + (i + 1) * 60 * 60_000) }));
+  row.PPLTN_TIME = toKst(now - (state.sourceAgeMinutes ?? 5) * 60_000);
+  const firstForecast = Math.ceil((now + 60_000) / 3_600_000) * 3_600_000;
+  row.FCST_PPLTN = row.FCST_PPLTN.map((p, i) => ({ ...p, FCST_TIME: toKst(firstForecast + i * 3_600_000),
+    ...(state.planningScenario ? { FCST_CONGEST_LVL: areaCode === "POI105" ? (i === 0 ? "붐빔" : i === 1 ? "보통" : "여유") : (i === 0 ? "보통" : "여유") } : {}) }));
   return Response.json(body);
 };

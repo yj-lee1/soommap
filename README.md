@@ -2,9 +2,10 @@
 
 내 조건을 지키며 덜 붐비는 외출 계획을 찾고 조정하는 웹 서비스.
 
-현재 **1단계: 한강공원 5곳의 실제 데이터·예측·캐시 구현**까지 진행했습니다. 조건 입력·추천 엔진·AI 해석은 이후 단계입니다.
+현재 **2단계: 수동 조건 입력과 실제 예측 기반 추천 엔진**까지 구현했습니다. 자연어 AI 연결과 디자인은 이후 단계입니다.
 
-- [1단계 검수 보고·공개 URL](docs/reviews/stage-1.md)
+- [2단계 검수 보고·공개 URL](docs/reviews/stage-2.md)
+- [추천 규칙·지연 예측 정책](docs/recommendation-engine.md)
 - [데이터 구조·캐시·품질 정책](docs/data-foundation.md)
 - [실행 계획](docs/soommap-execution-plan.md)
 - [진행·검수 기록](docs/soommap-progress.md)
