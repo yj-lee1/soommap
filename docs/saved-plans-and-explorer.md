@@ -34,3 +34,5 @@
 날씨·행사·장소 확장은 조건부 목록에 남긴다. 현재 운영 중인 `citydata_ppltn` 응답에는 날씨·행사가 없으므로 새로운 통합 응답 연결을 이 단계 완료 조건으로 추가하지 않았다. 5개 공원 전체를 비교하면 Free TMAP의 하루 10건 중 최대 5건이 필요하므로 기존 5곳 체험을 먼저 유지한다. 이는 기존 단계 계획의 조건부 범위 결정이며 핵심 추천 품질·조건 검사를 축소하지 않는다. 최종 브랜드·간격·모션은 6단계에서 통합한다.
 
 근거: [Next.js PWA 안내](https://nextjs.org/docs/app/guides/progressive-web-apps), [MDN localStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage), [기존 공간자료 출처·정책](data-foundation.md).
+
+검수 배포는 `https://soommap-review-yeongjis-projects-f12fc56b.vercel.app` 고정 alias를 사용한다. 다음 단계 Preview도 같은 주소로 연결해 origin을 유지한다. 이는 배포 설정이며 앱 코드의 Vercel 의존성이 아니다. [Vercel alias 공식 안내](https://vercel.com/docs/cli/alias).
