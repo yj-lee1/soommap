@@ -6,12 +6,32 @@ const sample = JSON.parse(readFileSync(new URL("./seoul-population.json", import
 const places = JSON.parse(readFileSync(new URL("../../src/lib/data/places.json", import.meta.url), "utf8"));
 const toKst = ms => new Date(ms + 9 * 60 * 60_000).toISOString().slice(0, 16).replace("T", " ");
 writeFileSync(prefix + ".calls", "");
-globalThis.fetch = async (input) => {
+const redis = new Map();
+globalThis.fetch = async (input, options) => {
   const url = new URL(String(input));
+  const state = JSON.parse(readFileSync(prefix + ".json", "utf8"));
+  if (state.ai && url.hostname === "fixture.upstash.io") {
+    const command = JSON.parse(options.body);
+    if (command[0] === "GET") return Response.json({ result: redis.get(command[1]) ?? null });
+    if (command[0] === "SET") {
+      if (command.includes("NX") && redis.has(command[1])) return Response.json({ result: null });
+      redis.set(command[1], command[2]); return Response.json({ result: "OK" });
+    }
+    // UI smoke only; actual atomic Lua is tested against isolated real Redis keys.
+    if (command[0] === "EVAL") return Response.json({ result: [command[1].includes("local cap") ? "reserved" : "settled", "50000"] });
+    throw new Error("unexpected_fixture_redis_command");
+  }
+  if (state.ai && url.hostname === "api.openai.com") {
+    const body = JSON.parse(options.body), name = body.text.format.name;
+    appendFileSync(prefix + ".calls", name + "\n");
+    if (state.aiFail || name === "recommendation_evidence" && state.explainFail) throw new Error("fixture_ai_failure");
+    const output = name === "outing_conditions" ? state.interpretation : { factIds: ["reason", "stay"] };
+    return Response.json({ status: "completed", usage: { input_tokens: 100, output_tokens: 20 },
+      output: [{ type: "message", content: [{ type: "output_text", text: JSON.stringify(output) }] }] });
+  }
   if (url.hostname !== "openapi.seoul.go.kr") throw new Error("fixture_external_network_forbidden");
   const areaCode = url.pathname.split("/").at(-1);
   appendFileSync(prefix + ".calls", areaCode + "\n");
-  const state = JSON.parse(readFileSync(prefix + ".json", "utf8"));
   if (state.delayMs) await new Promise(resolve => setTimeout(resolve, Math.min(state.delayMs, 1000)));
   if (state.failAll || state.failCode === areaCode) throw new Error("fixture_provider_failure");
   const place = places.find(p => p.source.areaCode === areaCode);
