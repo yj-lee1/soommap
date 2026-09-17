@@ -3,7 +3,7 @@
 기준 계획: [단독 실행·단계별 검수 계획](./soommap-execution-plan.md)
 
 - 지정 원격: `git@github.com:yj-lee1/soommap.git`
-- 현재 상태: 4단계 승인 완료, 4.5단계 구현·모의 검증 완료, TMAP 계정·키 및 실제 연결 검증 대기. 참가 신청 여부는 별도 확인 대기.
+- 현재 상태: 4단계 승인 완료, 4.5단계 구현·모의 검증 완료, TMAP Free 키 설정 완료, Preview 실제 연결 검증 진행 중. 참가 신청 여부는 별도 확인 대기.
 - 개발 상태: `feat/transit-arrival-and-map-handoff`에서 4.5단계 구현·모의 검증 완료. 108개 자동 검사, 타입·린트·빌드, 실제 Redis atomic 한도, 모의 UI·HTTP 검증 통과.
 - 원격 반영: 배포 코드 `84ca4d4` push 완료. [최신 검수 URL](https://soommap-1esve63ga-yeongjis-projects-f12fc56b.vercel.app). `main`·Production은 변경하지 않음.
 - 다음 작업: TMAP 계정 상품·키 설정 후 실제 1곳 ETA 검증과 Preview 설정 → [4.5단계](reviews/stage-4.5.md) 최종 검수 요청.
@@ -85,3 +85,5 @@
 - 2026-09-17 18:34 KST: 4단계 승인 후 4.5단계 구현. TMAP 총 5,000원 승인 반영, 모의 기능·108개 자동 검사·격리 Redis 동시 요청 검증 통과. 실제 TMAP/OpenAI 추가 호출 0회. 계정 상품 설정과 TMAP 키 입력 대기.
 
 - 2026-09-17 18:37 KST: 4.5단계 Preview `3817281` READY. 실제 서울 자료로 수동 도착 비교·확정·출발지 재사용 지도 버튼까지 공개 검증. 자동 ETA는 TMAP 키 연결 대기. [설정 안내](tmap-setup.md). 다음 단계는 아직 착수하지 않음.
+
+- 2026-09-17: 사용자 TMAP 키 입력 완료 및 Free 우선 선택. 로컬 free 확인. Preview 전용 키 연결 뒤 실제 공원 1곳으로 검증하며 종량제는 켜지 않는다.

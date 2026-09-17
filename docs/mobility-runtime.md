@@ -1,6 +1,6 @@
 # 4.5단계 이동시간·길찾기 구현
 
-2026-09-17. 개발 브랜치 `feat/transit-arrival-and-map-handoff`. TMAP 실제 연결은 계정 상품·키 준비 후 검증한다. 기존 서울·OpenAI·Redis·Vercel 설정은 재사용한다.
+2026-09-17. 개발 브랜치 `feat/transit-arrival-and-map-handoff`. TMAP 키 설정 완료. 최신 사용자 선택에 따라 Free 하루 10건으로 Preview 실제 연결을 검증한다. 종량제는 추후 전환 지시 전까지 사용하지 않는다. 기존 서울·OpenAI·Redis·Vercel 설정은 재사용한다.
 
 ## 동작
 
