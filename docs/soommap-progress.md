@@ -5,7 +5,7 @@
 - 지정 원격: `git@github.com:yj-lee1/soommap.git`
 - 현재 상태: 4단계 승인 완료, 4.5단계 구현·모의 검증 완료, TMAP 계정·키 및 실제 연결 검증 대기. 참가 신청 여부는 별도 확인 대기.
 - 개발 상태: `feat/transit-arrival-and-map-handoff`에서 4.5단계 구현·모의 검증 완료. 108개 자동 검사, 타입·린트·빌드, 실제 Redis atomic 한도, 모의 UI·HTTP 검증 통과.
-- 원격 반영: 배포 코드 `3817281` push 완료. [최신 검수 URL](https://soommap-ki90didbw-yeongjis-projects-f12fc56b.vercel.app). `main`·Production은 변경하지 않음.
+- 원격 반영: 배포 코드 `84ca4d4` push 완료. [최신 검수 URL](https://soommap-1esve63ga-yeongjis-projects-f12fc56b.vercel.app). `main`·Production은 변경하지 않음.
 - 다음 작업: TMAP 계정 상품·키 설정 후 실제 1곳 ETA 검증과 Preview 설정 → [4.5단계](reviews/stage-4.5.md) 최종 검수 요청.
 
 2026-09-17 보완: 사용자가 도착시각과 예측 시각 사이의 인구 보간, 혼잡 단계 변화, 체류 구간 평가와 경계 검증을 요청했다. [상세 정책](temporal-alignment.md)에 따라 2단계를 보완한다. 추가 OpenAI/TMAP 호출·결제 없음. 3단계 승인은 아직 받지 않았다.

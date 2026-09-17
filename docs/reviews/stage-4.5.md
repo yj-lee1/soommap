@@ -2,9 +2,9 @@
 
 2026-09-17. **구현·모의 검증 완료, TMAP 계정/키 설정과 실제 연결 검증 대기. 단계 완료 승인을 아직 요청하지 않는다.**
 
-브랜치: `feat/transit-arrival-and-map-handoff`. 배포 코드 `3817281`. `main`·Production 미변경.
+브랜치: `feat/transit-arrival-and-map-handoff`. 배포 코드 `84ca4d4`. `main`·Production 미변경.
 
-[검수 Preview](https://soommap-ki90didbw-yeongjis-projects-f12fc56b.vercel.app) — READY, Preview target. 배포 `dpl_7Dumk7stb6uZwAbWt1LAfKjex8zE`. TMAP 키 연결 대기를 화면에서 확인했다.
+[검수 Preview](https://soommap-1esve63ga-yeongjis-projects-f12fc56b.vercel.app) — READY, Preview target. 배포 `dpl_6eAmMosfBYwNV8KaKA8jPyupZhjh`. TMAP 키 연결 대기를 화면에서 확인했다.
 
 ## 구현
 
@@ -35,3 +35,5 @@
 [TMAP 설정 방법](../tmap-setup.md)
 
 현재 링크에서는 TMAP 키가 없으면 자동 도착 계산을 연결 대기로 표시한다. 출발역 선택 → 도착 범위 직접 지정 → 비교/확정 → 지도 길찾기는 검수 가능하다. 준비되지 않은 실제 ETA를 모의값으로 대체하지 않는다.
+
+네이버 native scheme의 장소명 공백을 `%20`으로 통일한 후 관련 자동 검사 10개·타입·린트·빌드를 재검증했다. 최종 Preview 코드는 `84ca4d4`이며 문서 후속 커밋은 배포 동작을 바꾸지 않는다.
