@@ -3,10 +3,10 @@
 기준 계획: [단독 실행·단계별 검수 계획](./soommap-execution-plan.md)
 
 - 지정 원격: `git@github.com:yj-lee1/soommap.git`
-- 현재 상태: 1단계 승인 완료, 2단계 검수 중 사용자 도착·체류 정렬 보완을 구현·검증 중. 참가 신청 여부는 별도 확인 대기.
-- 개발 상태: `feat/temporal-crowd-alignment`에서 보간 인구·전후 공식 표본·체류 평가·선호 불확실성·부분 범위 제외 구현. 62개 자동 검사, 모의 HTTP·모바일 통과. 새 Preview 배포 준비 중.
-- 원격 반영: 최종 배포 코드 `1416793` push 완료. [2단계 검수 URL](https://soommap-49y0ujy8r-yeongjis-projects-f12fc56b.vercel.app). 후속 보고 커밋은 문서 변경이며 `main`·Production은 변경하지 않음.
-- 다음 작업: [2단계 검수 보고](reviews/stage-2.md)의 사용자 승인 대기. 승인 후 3단계 자연어 해석·AI 설명을 진행.
+- 현재 상태: 1단계 승인 완료, 2단계 도착·체류 정렬 보완·Preview 배포·검증 완료, 사용자 재검수 대기. 참가 신청 여부는 별도 확인 대기.
+- 개발 상태: `feat/temporal-crowd-alignment`에서 보간 인구·전후 공식 표본·체류 평가·선호 불확실성·부분 범위 제외 구현. 62개 자동 검사, 모의 HTTP·모바일·실제 Preview 검증 통과.
+- 원격 반영: 배포 코드 `adf7c45` push 완료. [최신 검수 URL](https://soommap-gubbn8xw1-yeongjis-projects-f12fc56b.vercel.app). 후속 보고 커밋은 문서 변경이며 `main`·Production은 변경하지 않음.
+- 다음 작업: [2단계 보완 보고](reviews/stage-2-temporal.md)의 사용자 승인 대기. 승인 후 3단계 자연어 해석·AI 설명을 진행.
 
 2026-09-17 보완: 사용자가 도착시각과 예측 시각 사이의 인구 보간, 혼잡 단계 변화, 체류 구간 평가와 경계 검증을 요청했다. [상세 정책](temporal-alignment.md)에 따라 2단계를 보완한다. 추가 OpenAI/TMAP 호출·결제 없음. 3단계 승인은 아직 받지 않았다.
 
@@ -15,7 +15,7 @@
 | 계획 | 승인 완료 | 실행 계획 v2 | 2026-09-17 “승인할게. 작업 시작해.” |
 | 0. 저장소·환경·연동 | 승인 완료 | [검수 보고](reviews/stage-0.md), Preview `cf1a9da` | 2026-09-17 1단계 착수 지시로 승인 |
 | 1. 데이터 기반 | 승인 완료 | [보고](reviews/stage-1.md), Preview `9b6b48c` | 2026-09-17 2단계 진행 지시 |
-| 2. 추천 엔진 | 자체 확인 완료·검수 대기 | [보고](reviews/stage-2.md), Preview `1416793` | 사용자 승인 대기 |
+| 2. 추천 엔진·시간 정렬 보완 | 자체 확인 완료·재검수 대기 | [보완 보고](reviews/stage-2-temporal.md), Preview `adf7c45` | 사용자 승인 대기 |
 | 3. AI 연결 | 대기 | — | — |
 | 4. 계획 조정·완료 | 대기 | — | — |
 | 5. 부가 기능 | 대기 | — | — |
