@@ -6,6 +6,10 @@ import { draftFromConditions, manualConditions, type ManualDraft } from "@/lib/d
 import type { Candidate, Conditions, Recommendation } from "@/lib/domain/types";
 import type { PopulationOverview } from "@/lib/server/population";
 import type { AiPlan } from "@/lib/server/ai-planner";
+import { adjustPlan, effectiveConditions, startReplanning, type Adjustment, type Replanning } from "@/lib/domain/replanning";
+import { selectionUsable, updateSelection, type SelectedPlan, type SelectionCheck } from "@/lib/domain/selection";
+import { AdjustmentControls } from "./adjustment-controls";
+import { SelectedPlanPanel } from "./selected-plan";
 import { TemporalEvidence } from "./temporal-evidence";
 
 function changeText(candidate: Candidate, names: Map<string, string>, c: Conditions) {
@@ -32,24 +36,46 @@ export function ManualPlanner({ overview }: { overview: PopulationOverview }) {
   const [text, setText] = useState("");
   const [aiPending, setAiPending] = useState(false);
   const [error, setError] = useState("");
-  const [errorScope, setErrorScope] = useState<"ai" | "manual">("ai");
+  const [errorScope, setErrorScope] = useState<"ai" | "manual" | "adjust">("ai");
   const [pending, setPending] = useState(false);
   const [edited, setEdited] = useState(false);
+  const [replanning, setReplanning] = useState<Replanning | null>(null);
+  const replanningRef = useRef<Replanning | null>(null);
+  const [choice, setChoice] = useState<{ placeId: string; arrivalAt: string } | null>(null);
+  const [selected, setSelected] = useState<SelectedPlan | null>(null);
+  const [selectionPending, setSelectionPending] = useState(false), [selectionError, setSelectionError] = useState("");
+  const selectionSequence = useRef(0), selectionRequest = useRef<AbortController | null>(null);
+  const [revision, setRevision] = useState(0);
   const sequence = useRef(0), active = useRef<AbortController | null>(null);
-  useEffect(() => () => { active.current?.abort(); }, []);
+  useEffect(() => () => { active.current?.abort(); selectionRequest.current?.abort(); }, []);
+
+  function nextRevision() { const value = ++sequence.current; setRevision(value); return value; }
+  function setAdjustmentState(state: Replanning | null) { replanningRef.current = state; setReplanning(state); }
+  function clearSelection() {
+    selectionSequence.current++; selectionRequest.current?.abort(); setChoice(null); setSelected(null); setSelectionPending(false); setSelectionError("");
+  }
 
   function update(patch: Partial<ManualDraft>) {
-    sequence.current++; active.current?.abort(); setPending(false); setAiPending(false); setResponse(null); setAiPlan(null); setError(""); setEdited(true);
+    nextRevision(); active.current?.abort(); setPending(false); setAiPending(false); setResponse(null); setAiPlan(null); setError(""); setEdited(true);
+    setAdjustmentState(null); clearSelection();
     setDraft(current => ({ ...current, ...patch }));
   }
   async function submit(event: FormEvent) {
     event.preventDefault();
-    const version = ++sequence.current;
-    active.current?.abort(); const controller = new AbortController(); active.current = controller;
-    setError(""); setErrorScope("manual"); setResponse(null); setAiPlan(null); setAiPending(false); setPending(true);
-    const timeout = setTimeout(() => controller.abort(), 20_000);
+    const version = nextRevision();
+    active.current?.abort(); setPending(false); setError("");
+    setResponse(null); setAiPlan(null); setErrorScope("manual"); clearSelection();
     try {
       const conditions = manualConditions(draft, version, places);
+      setAdjustmentState(startReplanning(conditions));
+      await compare(conditions, version);
+    } catch (e) { setError(e instanceof Error ? e.message : "입력 조건을 확인해주세요."); }
+  }
+  async function compare(conditions: Conditions, version: number) {
+    active.current?.abort(); const controller = new AbortController(); active.current = controller;
+    setError(""); setAiPending(false); setPending(true);
+    const timeout = setTimeout(() => controller.abort(), 20_000);
+    try {
       const http = await fetch("/api/recommendations", { method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify(conditions), signal: controller.signal, cache: "no-store" });
       const data = await http.json();
@@ -62,9 +88,48 @@ export function ManualPlanner({ overview }: { overview: PopulationOverview }) {
         e instanceof Error && e.name !== "TypeError" ? e.message : "연결을 확인한 뒤 다시 시도해주세요. 입력은 유지됩니다.");
     } finally { clearTimeout(timeout); if (version === sequence.current) setPending(false); }
   }
+  function adjust(action: Adjustment) {
+    const state = replanningRef.current;
+    if (!state) return;
+    setErrorScope("adjust");
+    try {
+      const next = adjustPlan(state, action, places), version = nextRevision();
+      setAdjustmentState(next); clearSelection();
+      void compare(effectiveConditions(next, version, places), version);
+    } catch (e) { setError(e instanceof Error ? e.message : "조건을 확인해주세요."); }
+  }
+  async function checkSelected(nextChoice: { placeId: string; arrivalAt: string }, previous: SelectedPlan | null = null) {
+    if (!response || pending || response.conditions.revision !== sequence.current) return;
+    const version = ++selectionSequence.current;
+    selectionRequest.current?.abort(); const controller = new AbortController(); selectionRequest.current = controller;
+    setChoice(nextChoice); setSelected(previous); setSelectionPending(true); setSelectionError("");
+    const timeout = setTimeout(() => controller.abort(), 20_000);
+    try {
+      const http = await fetch("/api/selection", { method: "POST", headers: { "Content-Type": "application/json" }, signal: controller.signal, cache: "no-store",
+        body: JSON.stringify({ conditions: response.conditions, choice: nextChoice }) });
+      const data = await http.json();
+      if (version !== selectionSequence.current) return;
+      if (!http.ok) throw new Error(data.error || "선택한 계획의 자료를 확인하지 못했어요.");
+      const check = data as SelectionCheck;
+      if (check.conditionsRevision !== response.conditions.revision || check.choice.placeId !== nextChoice.placeId || check.choice.arrivalAt !== nextChoice.arrivalAt) {
+        throw new Error("선택한 계획과 응답이 다릅니다. 다시 확인해주세요.");
+      }
+      setSelected(updateSelection(previous, check));
+    } catch {
+      if (version === selectionSequence.current) { setSelected(previous ? { ...previous, confirmedAt: null } : null); setSelectionError("선택은 유지했지만 자료를 확인하지 못했어요. 다시 확인해주세요."); }
+    } finally { clearTimeout(timeout); if (version === selectionSequence.current) setSelectionPending(false); }
+  }
+  function confirmSelected() {
+    if (!selected || !response || selectionPending) return;
+    if (!selectionUsable(selected.check, response.conditions.revision, Date.now())) {
+      setSelectionError("자료를 다시 확인한 뒤 확정해주세요."); return;
+    }
+    setSelected({ ...selected, confirmedAt: new Date().toISOString() });
+  }
   async function submitText(event: FormEvent) {
     event.preventDefault();
-    const version = ++sequence.current;
+    const version = nextRevision();
+    clearSelection(); setAdjustmentState(null);
     active.current?.abort(); const controller = new AbortController(); active.current = controller;
     setError(""); setErrorScope("ai"); setResponse(null); setAiPlan(null); setPending(true); setAiPending(true);
     const timeout = setTimeout(() => controller.abort(), 60_000);
@@ -77,13 +142,14 @@ export function ManualPlanner({ overview }: { overview: PopulationOverview }) {
       if (version !== sequence.current) return;
       if (!http.ok) throw new Error(typeof data.error === "string" ? data.error : "조건을 해석하지 못했어요.");
       if (data.result?.conditionsRevision !== version) throw new Error("조건 버전이 바뀌었어요. 다시 비교해주세요.");
-      setDraft(draftFromConditions(data.conditions)); setResponse(data); setAiPlan(data); setEdited(false);
+      setDraft(draftFromConditions(data.conditions)); setAdjustmentState(startReplanning(data.conditions)); setResponse(data); setAiPlan(data); setEdited(false);
     } catch (e) {
       if (version === sequence.current) setError(controller.signal.aborted ? "응답이 늦어 멈췄어요. 입력은 유지되며 아래 조건으로 비교할 수 있어요." :
         e instanceof Error && e.name !== "TypeError" ? e.message : "연결을 확인해주세요. 입력은 유지했어요.");
     } finally { clearTimeout(timeout); if (version === sequence.current) { setPending(false); setAiPending(false); } }
   }
   const result = response?.result, applied = response?.conditions;
+  const resultCurrent = applied?.revision === revision && !pending;
   return <>
     <section className="panel" aria-labelledby="natural-title">
       <h2 id="natural-title">어떤 외출을 생각하고 있나요?</h2>
@@ -106,8 +172,14 @@ export function ManualPlanner({ overview }: { overview: PopulationOverview }) {
     <section className="panel" aria-labelledby="planner-title">
       <h2 id="planner-title">내 조건으로 비교하기</h2>
       <p>원래 계획이 있으면 입력하고, 바꿔도 되는 범위를 정해주세요. 모든 시각은 한국 시간입니다.</p>
+      <div className="action-row" role="group" aria-label="목적지 결정 여부">
+        <button aria-pressed={!!draft.placeId} onClick={() => update({ placeId: draft.placeId || places[0].id })}>목적지를 정했어요</button>
+        <button aria-pressed={!draft.placeId} onClick={() => update({ placeId: "", arrival: "", allowPlaceChange: true, timeMode: "custom" })}>아직 못 정했어요</button>
+      </div>
+      {!draft.placeId && <p className="note">갈 수 있는 공원과 방문 시간대를 골라주세요. 도착시각을 계산할 필요는 없어요. 아래 시간 범위는 수정 가능한 제안이며 이동시간은 아직 반영하지 않습니다.</p>}
+      {replanning && <p className="note">아래 입력은 처음 비교 조건입니다. 입력을 수정하면 추가 고정·제외와 확정 상태가 초기화되고 새 조건으로 비교합니다.</p>}
       <form onSubmit={submit}>
-        <fieldset><legend>원래 계획</legend>
+        <fieldset><legend>{draft.placeId ? "원래 계획" : "처음 정할 조건"}</legend>
           <div className="form-grid">
             <label>원래 장소<select value={draft.placeId} onChange={e => update({ placeId: e.target.value })}>
               <option value="">아직 못 정했어요</option>
@@ -154,23 +226,34 @@ export function ManualPlanner({ overview }: { overview: PopulationOverview }) {
         <p className="note" role="status" aria-live="polite">{pending ? "원래 계획과 허용 조건을 유지하며 자료를 확인하고 있어요." : edited ? "조건을 바꿨어요. 비교 버튼을 눌러 새 결과를 확인해주세요." : "이 단계는 AI 호출 없이 제공된 예측과 정해진 규칙으로 계산합니다."}</p>
       </form>
     </section>
-    {result && applied && <section className="results" aria-labelledby="result-title" aria-live="polite">
+    {replanning && <><AdjustmentControls state={replanning} places={places} pending={pending} onAdjust={adjust} />
+      {error && errorScope === "adjust" && <p className="notice" role="alert">{error}</p>}
+      {!pending && !resultCurrent && <button onClick={() => {
+        const version = nextRevision(); setErrorScope("adjust"); clearSelection(); void compare(effectiveConditions(replanning, version, places), version);
+      }}>현재 조정 조건으로 다시 비교</button>}
+    </>}
+    {choice && applied && <SelectedPlanPanel key={`${choice.placeId}:${choice.arrivalAt}:${selected?.check.checkedAt ?? "pending"}`} plan={selected} choice={choice} conditions={applied}
+      places={places} pending={selectionPending} error={selectionError} onConfirm={confirmSelected} onRecheck={() => void checkSelected(choice, selected)} onAdjust={clearSelection} />}
+    {result && applied && <section className="results" aria-labelledby="result-title" aria-live="polite" aria-busy={pending}>
       <div className="panel"><h2 id="result-title">{result.status === "ready" ? "조건에 맞는 비교 결과" : result.status === "preference-uncertain" ? "혼잡 선호 충족이 불확실한 결과" : result.status === "preference-unmet" ? "혼잡 선호에 못 미치는 결과" : "비교를 완료하지 못했어요"}</h2>
+        {!resultCurrent && <p className="notice">이전 조건의 결과입니다. 새 비교가 완료되어야 선택할 수 있어요.</p>}
         <p>{result.message}</p>
-        <p>원래 계획: {applied.originalPlan.placeId ? names.get(applied.originalPlan.placeId) : "장소 미정"} · {applied.originalPlan.preferredArrivalAt ? formatSeoulTime(applied.originalPlan.preferredArrivalAt) : "시각 미정"} · {applied.originalPlan.durationMinutes ? `${applied.originalPlan.durationMinutes}분 머물기` : "체류시간 미정"}</p>
+        <p>{applied.originalPlan.placeId ? "원래 계획" : "처음 정한 조건"}: {applied.originalPlan.placeId ? names.get(applied.originalPlan.placeId) : "장소 미정"} · {applied.originalPlan.preferredArrivalAt ? formatSeoulTime(applied.originalPlan.preferredArrivalAt) : "시각 미정"} · {applied.originalPlan.durationMinutes ? `${applied.originalPlan.durationMinutes}분 머물기` : "체류시간 미정"}</p>
         <p>반드시 지킬 범위: {applied.hard.pinnedPlaceId ? `${names.get(applied.hard.pinnedPlaceId)}만` : applied.hard.allowedPlaceIds?.map(id => names.get(id)).join(", ") || "허용 장소 없음"}<br />
           도착 {formatSeoulTime(applied.hard.arrivalWindow.notBefore!)} ~ {formatSeoulTime(applied.hard.arrivalWindow.notAfter!)}</p>
+        {applied.hard.pinnedArrivalAt && <p>고정한 도착시각: {formatSeoulTime(applied.hard.pinnedArrivalAt)}</p>}
+        {!!applied.hard.excludedPlaceIds.length && <p>제외: {applied.hard.excludedPlaceIds.map(id => names.get(id)).join(", ")}</p>}
         <p className="note">계산 시각 {formatSeoulTime(result.checkedAt)} · 필수 조건과 데이터 검사를 통과한 후보 {result.eligibleCount}개</p>
-        {aiPlan?.explanation.facts.length ? <div><p className="eyebrow">{aiPlan.explanation.mode === "ai-selected-evidence" ? "계산된 근거에서 AI가 정리한 설명" : "계산 근거 설명"}</p>
+        {aiPlan?.conditions.revision === applied.revision && aiPlan.explanation.facts.length ? <div><p className="eyebrow">{aiPlan.explanation.mode === "ai-selected-evidence" ? "계산된 근거에서 AI가 정리한 설명" : "계산 근거 설명"}</p>
           {aiPlan.explanation.facts.map(fact => <p key={fact.id}>{fact.text}</p>)}</div> : result.explanation && <p>{result.explanation.reason}</p>}
-        {aiPlan?.notice && <p className="notice">{aiPlan.notice}</p>}
+        {aiPlan?.conditions.revision === applied.revision && aiPlan.notice && <p className="notice">{aiPlan.notice}</p>}
         {result.limitations.map(text => <p className="note" key={text}>{text}</p>)}
       </div>
       <div className="result-options">{result.options.map((option, index) => {
         const c = option.candidate;
         const unchanged = c?.change.placeChanged === false && c.change.arrivalDeltaMinutes === 0;
         const title = option.role === "original" ? "원래 계획" : option.role === "alternative" ? "다른 선택" : unchanged ? "추천 · 원래 계획 유지" : "추천";
-        return <article className="panel result-card" key={c?.id ?? `original-${index}`}>
+        return <article className="panel result-card" key={c?.id ?? `original-${index}`} aria-label={`${c ? names.get(c.placeId) : "원래 계획"} ${c ? formatSeoulTime(c.arrivalAt) : ""} ${title}`}>
           <p className="eyebrow">{title}{!option.eligible ? " · 비교 제외" : c?.dataConfidence === "delayed" ? " · 지연 예측 참고" : ""}</p>
           <h3>{c ? names.get(c.placeId) : names.get(applied.originalPlan.placeId!)}</h3>
           <p>{c?.arrivalAt || applied.originalPlan.preferredArrivalAt ? `${formatSeoulTime(c?.arrivalAt ?? applied.originalPlan.preferredArrivalAt!)} 도착` : "도착시각 미정"} · {applied.originalPlan.durationMinutes ? `${applied.originalPlan.durationMinutes}분 머물기` : "도착 기준 비교"}</p>
@@ -179,6 +262,12 @@ export function ManualPlanner({ overview }: { overview: PopulationOverview }) {
             <p className="note">원자료 기준 {formatSeoulTime(c.sourceUpdatedAt)} · 수신 {formatSeoulTime(c.fetchedAt)}<br />계산 시점 기준 {Math.max(0, Math.floor((Date.parse(result.checkedAt) - Date.parse(c.sourceUpdatedAt)) / 60_000))}분 전 자료</p>
           </> : <p>해당 시각 예측을 확인할 수 없어요.</p>}
           {option.reasons.map(text => <p className="notice" key={text}>{text}</p>)}
+          {c && option.eligible && <div className="action-row">
+            {replanning && !replanning.base.hard.pinnedPlaceId && <button disabled={!resultCurrent} onClick={() => adjust({ type: "pin-place", placeId: c.placeId })}>이 장소 고정</button>}
+            {replanning && !replanning.base.hard.pinnedArrivalAt && <button disabled={!resultCurrent} onClick={() => adjust({ type: "pin-time", at: c.arrivalAt })}>이 시각 고정</button>}
+            <button disabled={!resultCurrent} onClick={() => adjust({ type: "exclude", placeId: c.placeId })}>이번에는 이곳 제외</button>
+            <button disabled={!resultCurrent || selectionPending} onClick={() => void checkSelected({ placeId: c.placeId, arrivalAt: c.arrivalAt })}>이 계획 선택</button>
+          </div>}
         </article>;
       })}</div>
       {result.excludedPlaces.length > 0 && <details className="panel"><summary>장소별 제외 이유 {result.excludedPlaces.length}곳</summary>

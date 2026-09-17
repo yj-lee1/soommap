@@ -46,6 +46,9 @@ input, select, textarea { display: block; font: inherit; color: var(--foreground
 .result-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); gap: 1rem; }
 .result-card { margin: 0; }
 .result-card h3 { margin-top: 0; }
+.action-row { display: flex; gap: 0.625rem; flex-wrap: wrap; align-items: center; margin: 1rem 0; }
+button[aria-pressed="true"] { border: 2px solid var(--focus); }
+.selected-plan { border: 2px solid var(--focus); }
 .place-list { display: grid; gap: 1rem; }
 .place-panel { margin: 0; }
 .place-heading { display: flex; justify-content: space-between; align-items: start; gap: 0.75rem; }

@@ -24,6 +24,7 @@ globalThis.fetch = async (input, options) => {
   if (state.ai && url.hostname === "api.openai.com") {
     const body = JSON.parse(options.body), name = body.text.format.name;
     appendFileSync(prefix + ".calls", name + "\n");
+    if (state.aiDelayMs) await new Promise(resolve => setTimeout(resolve, Math.min(state.aiDelayMs, 3000)));
     if (state.aiFail || name === "recommendation_evidence" && state.explainFail) throw new Error("fixture_ai_failure");
     const output = name === "outing_conditions" ? state.interpretation : { factIds: ["reason", "stay"] };
     return Response.json({ status: "completed", usage: { input_tokens: 100, output_tokens: 20 },
@@ -44,6 +45,7 @@ globalThis.fetch = async (input, options) => {
   row.FCST_PPLTN = row.FCST_PPLTN.map((p, i) => ({ ...p, FCST_TIME: toKst(firstForecast + i * 3_600_000),
     ...(state.planningScenario ? { FCST_CONGEST_LVL: areaCode === "POI105" ? (i === 0 ? "붐빔" : i === 1 ? "보통" : "여유") : (i === 0 ? "보통" : "여유") } : {}),
     ...(state.temporalScenario ? { FCST_CONGEST_LVL: areaCode === "POI105" ? (i === 0 ? "보통" : i === 1 ? "약간 붐빔" : "붐빔") : "보통",
-      FCST_PPLTN_MIN: String(14_000 + i * 4_000), FCST_PPLTN_MAX: String(16_000 + i * 5_000) } : {}) }));
+      FCST_PPLTN_MIN: String(14_000 + i * 4_000), FCST_PPLTN_MAX: String(16_000 + i * 5_000) } : {}),
+    ...(state.overrideCongestion ? { FCST_CONGEST_LVL: state.overrideCongestion } : {}) }));
   return Response.json(body);
 };

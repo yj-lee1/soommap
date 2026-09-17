@@ -66,6 +66,16 @@ function coverageReasons(candidate: Candidate | null): string[] {
     candidate.visit.coverage !== "complete" ? ["체류 종료까지 예측이 이어지지 않거나 표본 간격이 60분을 넘어 비교에서 제외했어요. 부족한 구간을 외삽하지 않아요."] : [];
 }
 
+/** Recheck exactly the selected place/time, even if a different candidate ranks higher. */
+export function checkChoice(c: Conditions, choice: { placeId: string; arrivalAt: string }, places: Place[], snapshots: Snapshot[], nowMs: number) {
+  const place = places.find(p => p.id === choice.placeId), snapshot = snapshots.find(s => s.placeId === choice.placeId);
+  const candidate = snapshot ? makeCandidate(snapshot, choice.arrivalAt, c, nowMs) : null;
+  const reasons = [...(place ? placeReasons(place, c) : ["지원하지 않는 장소예요."]), ...timeReasons(choice.arrivalAt, c, nowMs),
+    ...dataReasons(snapshot, c, nowMs), ...coverageReasons(candidate)];
+  return { choice: { ...choice }, conditionsRevision: c.revision, checkedAt: new Date(nowMs).toISOString(),
+    eligible: !!candidate && reasons.length === 0, reasons: unique(reasons), candidate };
+}
+
 /** Pure deterministic engine: caller supplies validated conditions, server data and time. */
 export function recommend(c: Conditions, places: Place[], snapshots: Snapshot[], nowMs: number): Recommendation {
   const result: Recommendation = { checkedAt: new Date(nowMs).toISOString(), conditionsRevision: c.revision,

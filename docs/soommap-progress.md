@@ -3,10 +3,10 @@
 기준 계획: [단독 실행·단계별 검수 계획](./soommap-execution-plan.md)
 
 - 지정 원격: `git@github.com:yj-lee1/soommap.git`
-- 현재 상태: 3단계 자체 검증 완료, 사용자 검수·4단계 승인 대기. 참가 신청 여부는 별도 확인 대기.
-- 개발 상태: `feat/ai-outing-planner`에서 자연어 해석·근거 선택 설명·조건 폼 연결·공유 비용 제어 구현. 85개 자동 검사와 실제 Redis 동시성 검사, 모의 HTTP·모바일 및 공개 Preview 실제 AI 3문장 검증 완료.
-- 원격 반영: 배포 코드 `f1c8c0f` push 완료. [최신 검수 URL](https://soommap-ck22f66ma-yeongjis-projects-f12fc56b.vercel.app). 후속 보고 커밋은 문서 변경이며 `main`·Production은 변경하지 않음.
-- 다음 작업: [3단계 보고](reviews/stage-3.md) 검수 승인 후 4단계 고정·해제·계획 확정 구현. [길찾기 실행 계획](mobility-plan.md)은 4.5단계로 추가.
+- 현재 상태: 3단계 사용자 승인, 4단계 로컬 검증 완료·Preview 배포 준비. 참가 신청 여부는 별도 확인 대기.
+- 개발 상태: `feat/plan-adjustment-and-confirmation`에서 고정·해제·제외·짧은 정정·계획 확정·자료 재확인 구현. 98개 자동 검사와 모의 HTTP·모바일·응답 순서 검증 완료.
+- 원격 반영: 직전 Preview는 `f1c8c0f`. 4단계는 배포 검증 후 URL을 기록한다. `main`·Production은 변경하지 않음.
+- 다음 작업: [4단계 보고](reviews/stage-4.md) 검수 승인 후 [4.5단계 이동시간·길찾기](mobility-plan.md).
 
 2026-09-17 보완: 사용자가 도착시각과 예측 시각 사이의 인구 보간, 혼잡 단계 변화, 체류 구간 평가와 경계 검증을 요청했다. [상세 정책](temporal-alignment.md)에 따라 2단계를 보완한다. 추가 OpenAI/TMAP 호출·결제 없음. 3단계 승인은 아직 받지 않았다.
 
@@ -16,8 +16,8 @@
 | 0. 저장소·환경·연동 | 승인 완료 | [검수 보고](reviews/stage-0.md), Preview `cf1a9da` | 2026-09-17 1단계 착수 지시로 승인 |
 | 1. 데이터 기반 | 승인 완료 | [보고](reviews/stage-1.md), Preview `9b6b48c` | 2026-09-17 2단계 진행 지시 |
 | 2. 추천 엔진·시간 정렬 보완 | 승인·후속 작업 재개 | [보완 보고](reviews/stage-2-temporal.md), Preview `adf7c45` | 단계 조정 후 작업 재개 지시 |
-| 3. AI 연결 | 검수 대기 | [보고](reviews/stage-3.md), Preview `f1c8c0f` | 검수·4단계 승인 요청 |
-| 4. 계획 조정·완료 | 대기 | — | — |
+| 3. AI 연결 | 승인 완료 | [보고](reviews/stage-3.md), Preview `f1c8c0f` | 2026-09-17 “다음단계 진행해.” |
+| 4. 계획 조정·완료 | 로컬 검증 완료·배포 준비 | [보고](reviews/stage-4.md) | 배포 검증 후 요청 |
 | 4.5. 이동시간·길찾기 실행 | 계획 반영 | [계획](mobility-plan.md) | 완료 후 요청 |
 | 5. 부가 기능 | 대기 | — | — |
 | 6. 디자인 통합 | 대기 | — | — |
