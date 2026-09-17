@@ -28,7 +28,19 @@ export async function getPopulationOverview() {
   // Render per request without force-dynamic's force-no-store override, so the
   // explicitly cached provider operation keeps its shared-cache semantics.
   await connection();
-  const results = await Promise.allSettled(enabledPlaces.map(place => cachedSnapshot(place.id)));
+  const results = await Promise.allSettled(enabledPlaces.map(async place => {
+    const snapshot = await cachedSnapshot(place.id);
+    if (Date.now() - Date.parse(snapshot.fetchedAt) > cacheConfig.revalidateSeconds * 1000) {
+      // Next normally returns the stale value before its revalidation completes.
+      // For a decision, await that SAME bounded operation so a first visitor
+      // after idle time does not get a needless "data unavailable" result.
+      const refreshing = requestGate.existing(place.id);
+      if (refreshing) {
+        try { return await refreshing; } catch { /* Keep the last normal snapshot. */ }
+      }
+    }
+    return snapshot;
+  }));
   const checkedAt = new Date().toISOString();
   const nowMs = Date.parse(checkedAt);
   const rows = results.map((result, index) => {

@@ -144,6 +144,17 @@ test("adjacent requests reuse a completed result until the shared-cache write se
   assert.equal(await run("same", load), 2);
 });
 
+test("a stale-cache reader can await existing revalidation without a second provider call", async () => {
+  let calls = 0;
+  const run = createRequestGate<number>();
+  assert.equal(run.existing("park"), undefined);
+  const pending = run("park", async () => { calls++; await new Promise(resolve => setTimeout(resolve, 10)); return 42; });
+  assert.equal(run.existing("park"), pending);
+  assert.equal(await run.existing("park"), 42);
+  assert.equal(await run.existing("park"), 42);
+  assert.equal(calls, 1);
+});
+
 test("transport uses official area code and never retries a failed request", async () => {
   let calls = 0;
   const mock: typeof fetch = async (input, init) => {

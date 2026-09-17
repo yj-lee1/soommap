@@ -3,7 +3,7 @@ export function createRequestGate<T>(cooldownMs = 30_000, clock = Date.now, succ
   const inFlight = new Map<string, Promise<T>>();
   const failedUntil = new Map<string, number>();
   const recent = new Map<string, { value: T; until: number }>();
-  return function run(key: string, load: () => Promise<T>): Promise<T> {
+  function run(key: string, load: () => Promise<T>): Promise<T> {
     const pending = inFlight.get(key);
     if (pending) return pending;
     // Bridge the gap between a very fast provider response and the framework's
@@ -22,5 +22,13 @@ export function createRequestGate<T>(cooldownMs = 30_000, clock = Date.now, succ
     }).finally(() => { inFlight.delete(key); });
     inFlight.set(key, promise);
     return promise;
-  };
+  }
+  // Await an operation already started by shared-cache revalidation without
+  // initiating another provider request. The grace result covers a fast finish.
+  return Object.assign(run, { existing(key: string): Promise<T> | undefined {
+    const pending = inFlight.get(key);
+    if (pending) return pending;
+    const value = recent.get(key);
+    return value && value.until > clock() ? Promise.resolve(value.value) : undefined;
+  } });
 }

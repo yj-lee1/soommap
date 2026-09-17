@@ -12,6 +12,7 @@ globalThis.fetch = async (input) => {
   const areaCode = url.pathname.split("/").at(-1);
   appendFileSync(prefix + ".calls", areaCode + "\n");
   const state = JSON.parse(readFileSync(prefix + ".json", "utf8"));
+  if (state.delayMs) await new Promise(resolve => setTimeout(resolve, Math.min(state.delayMs, 1000)));
   if (state.failAll || state.failCode === areaCode) throw new Error("fixture_provider_failure");
   const place = places.find(p => p.source.areaCode === areaCode);
   if (!place) return Response.json({ RESULT: { "RESULT.CODE": "INFO-200" } });
