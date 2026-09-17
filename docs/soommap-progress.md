@@ -4,9 +4,9 @@
 
 - 지정 원격: `git@github.com:yj-lee1/soommap.git`
 - 현재 상태: 4단계 승인 완료, 4.5단계 구현·모의 검증 완료, TMAP 계정·키 및 실제 연결 검증 대기. 참가 신청 여부는 별도 확인 대기.
-- 개발 상태: `feat/plan-adjustment-and-confirmation`에서 고정·해제·제외·짧은 정정·계획 확정·자료 재확인 구현. 98개 자동 검사와 모의 HTTP·모바일·응답 순서 및 공개 실제 자료 검증 완료.
-- 원격 반영: 배포 코드 `a8554f6` push 완료. [최신 검수 URL](https://soommap-ls5junz5d-yeongjis-projects-f12fc56b.vercel.app). 후속 보고 커밋은 문서 변경이며 `main`·Production은 변경하지 않음.
-- 다음 작업: [4단계 보고](reviews/stage-4.md) 검수 승인 후 [4.5단계 이동시간·길찾기](mobility-plan.md).
+- 개발 상태: `feat/transit-arrival-and-map-handoff`에서 4.5단계 구현·모의 검증 완료. 108개 자동 검사, 타입·린트·빌드, 실제 Redis atomic 한도, 모의 UI·HTTP 검증 통과.
+- 원격 반영: 배포 코드 `3817281` push 완료. [최신 검수 URL](https://soommap-ki90didbw-yeongjis-projects-f12fc56b.vercel.app). `main`·Production은 변경하지 않음.
+- 다음 작업: TMAP 계정 상품·키 설정 후 실제 1곳 ETA 검증과 Preview 설정 → [4.5단계](reviews/stage-4.5.md) 최종 검수 요청.
 
 2026-09-17 보완: 사용자가 도착시각과 예측 시각 사이의 인구 보간, 혼잡 단계 변화, 체류 구간 평가와 경계 검증을 요청했다. [상세 정책](temporal-alignment.md)에 따라 2단계를 보완한다. 추가 OpenAI/TMAP 호출·결제 없음. 3단계 승인은 아직 받지 않았다.
 
@@ -17,7 +17,7 @@
 | 1. 데이터 기반 | 승인 완료 | [보고](reviews/stage-1.md), Preview `9b6b48c` | 2026-09-17 2단계 진행 지시 |
 | 2. 추천 엔진·시간 정렬 보완 | 승인·후속 작업 재개 | [보완 보고](reviews/stage-2-temporal.md), Preview `adf7c45` | 단계 조정 후 작업 재개 지시 |
 | 3. AI 연결 | 승인 완료 | [보고](reviews/stage-3.md), Preview `f1c8c0f` | 2026-09-17 “다음단계 진행해.” |
-| 4. 계획 조정·완료 | 승인 완료 | [보고](reviews/stage-4.md), Preview `a8554f6` | 검수·4.5단계 승인 요청 |
+| 4. 계획 조정·완료 | 승인 완료 | [보고](reviews/stage-4.md), Preview `a8554f6` | 2026-09-17 “다음 단계 진행해” |
 | 4.5. 이동시간·길찾기 실행 | 실제 연결 검증 대기 | [검수 현황](reviews/stage-4.5.md) | 실제 연결 후 요청 |
 | 5. 부가 기능 | 대기 | — | — |
 | 6. 디자인 통합 | 대기 | — | — |
@@ -83,3 +83,5 @@
 - 2026-09-17 17:47 KST: 4단계 Preview `a8554f6` READY. 98개 자동 검사와 실제 서울 자료의 고정·선택·확정·복사, 30분 최신성 경계의 재확인 동작 검증. 이번 실제 OpenAI 추가 0회/$0, 원장 $0.068416/$20 유지. 4.5단계는 사용자 승인 대기.
 
 - 2026-09-17 18:34 KST: 4단계 승인 후 4.5단계 구현. TMAP 총 5,000원 승인 반영, 모의 기능·108개 자동 검사·격리 Redis 동시 요청 검증 통과. 실제 TMAP/OpenAI 추가 호출 0회. 계정 상품 설정과 TMAP 키 입력 대기.
+
+- 2026-09-17 18:37 KST: 4.5단계 Preview `3817281` READY. 실제 서울 자료로 수동 도착 비교·확정·출발지 재사용 지도 버튼까지 공개 검증. 자동 ETA는 TMAP 키 연결 대기. [설정 안내](tmap-setup.md). 다음 단계는 아직 착수하지 않음.

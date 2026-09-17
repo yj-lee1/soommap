@@ -2,7 +2,9 @@
 
 2026-09-17. **구현·모의 검증 완료, TMAP 계정/키 설정과 실제 연결 검증 대기. 단계 완료 승인을 아직 요청하지 않는다.**
 
-브랜치: `feat/transit-arrival-and-map-handoff`. `main`·Production 미변경.
+브랜치: `feat/transit-arrival-and-map-handoff`. 배포 코드 `3817281`. `main`·Production 미변경.
+
+[검수 Preview](https://soommap-ki90didbw-yeongjis-projects-f12fc56b.vercel.app) — READY, Preview target. 배포 `dpl_7Dumk7stb6uZwAbWt1LAfKjex8zE`. TMAP 키 연결 대기를 화면에서 확인했다.
 
 ## 구현
 
@@ -27,5 +29,9 @@
 1. TMAP 계정에서 대중교통 요약 API 상품 설정 후 `.env.local`에 `TMAP_API_KEY`, `TMAP_BILLING_MODE` 저장. 종량제 사용 승인(총 5,000원)은 받았으며 승인을 다시 요청하는 것이 아님. 계정 약관·결제 상품 설정은 사용자 직접 작업.
 2. 키 설정 후 공식 공공 출발역 1개 → 공원 1곳으로 실제 응답을 최소 호출 검증. Preview 환경변수만 추가하고 해당 배포를 최종 검수 URL로 갱신.
 3. iOS/Android 실기기에서 네이버·카카오 설치/미설치 연결과 위치 권한 허용/거부를 사용자 검수. 데스크톱 검증을 모바일 앱 성공으로 간주하지 않음.
+
+공개 Preview에서도 서울시 18:05 원자료의 19~20시 실제 예측으로 반포 계획을 확정하고, 서울역 출발을 유지한 양쪽 지도 버튼 및 콘솔 오류 없음을 확인했다. 모의 이동시간을 공개 서버에 표시하지 않았다.
+
+[TMAP 설정 방법](../tmap-setup.md)
 
 현재 링크에서는 TMAP 키가 없으면 자동 도착 계산을 연결 대기로 표시한다. 출발역 선택 → 도착 범위 직접 지정 → 비교/확정 → 지도 길찾기는 검수 가능하다. 준비되지 않은 실제 ETA를 모의값으로 대체하지 않는다.
