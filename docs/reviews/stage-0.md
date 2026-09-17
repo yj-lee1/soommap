@@ -2,6 +2,8 @@
 
 2026-09-17 · 상태: 기반 작업 확인 완료, 외부 설정 대기 · 0단계 전체 완료 아님
 
+기반 코드: [`0e9775a`](https://github.com/yj-lee1/soommap/commit/0e9775a30fd1512300631feb96eeee7d62bac882) · [작업 브랜치](https://github.com/yj-lee1/soommap/tree/codex/soommap-build) 반영 완료. 이 보고 갱신은 문서 변경이다. `main`과 최종 서비스는 아직 변경하지 않았다.
+
 ## 완료한 범위
 
 - 지정 원격의 `main` 이력에서 `codex/soommap-build` 작업 브랜치 생성. 기존 문서 보존.
@@ -18,7 +20,7 @@
 | `npm run check` | 타입 검사·ESLint 통과 |
 | `npm run build` | 배포 빌드 통과 |
 | `npm ls --depth=0` | 설치된 직접 의존성 확인, 오류 없음 |
-| 웹 화면 | 로컬 기본 화면의 데스크톱 및 390px 폭 확인 |
+| 웹 화면 | 로컬 기본 화면의 데스크톱 및 390px 폭 확인, 버튼 실행 후 정상 응답 문구 확인 |
 | `npm run check:setup` | 로컬 서버와 인증된 설정 확인 경로 응답 성공 |
 | 인증 없는 설정 조회 | 404 응답으로 차단 |
 | 비밀값 제외 | `.env.local`과 빌드·의존성 파일이 Git 제외 대상임을 확인 |

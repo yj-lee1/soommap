@@ -8,6 +8,16 @@ Node.js 24와 npm을 사용한다. `npm ci`, `npm run dev`로 시작한다. 기�
 
 현재 Next.js 16.3.5의 React·접근성 검사 플러그인은 ESLint 10과 호환되지 않아 ESLint 9.39.5를 고정한다. 설치 시 지원 종료 안내가 발생할 수 있다. 이는 개발 검사 도구의 제약이며, 추후 Next.js 검사 플러그인의 호환 버전이 나오면 함께 올린다.
 
+## GitHub 연결
+
+`origin`의 fetch 주소는 사용자가 지정한 SSH 주소다. 현재 기본 SSH 인증 계정에는 쓰기 권한이 없어, push 주소는 같은 저장소의 HTTPS로 설정했다. 이미 활성화된 GitHub CLI 계정 `yj-lee1`을 사용하며 전역 인증 설정이나 계정 권한은 바꾸지 않았다.
+
+필요한 경우 다음처럼 기존 GitHub CLI 인증을 해당 push에만 사용한다. 토큰을 URL이나 파일에 쓰지 않는다.
+
+```sh
+git -c credential.helper= -c 'credential.helper=!gh auth git-credential' push origin codex/soommap-build
+```
+
 ## 비밀값 입력
 
 `.env.example`을 참고해 프로젝트 루트의 `.env.local`에 값을 입력한다. `.env.local`은 Git에서 제외한다. 키를 채팅·스크린샷·문서에 적지 않는다.
