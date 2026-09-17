@@ -3,10 +3,10 @@
 기준 계획: [단독 실행·단계별 검수 계획](./soommap-execution-plan.md)
 
 - 지정 원격: `git@github.com:yj-lee1/soommap.git`
-- 현재 상태: 4단계 승인 완료, 4.5단계 구현·모의 검증 완료, TMAP Free 키 설정 완료, Preview 실제 연결 검증 진행 중. 참가 신청 여부는 별도 확인 대기.
+- 현재 상태: 4단계 승인 완료, 4.5단계 구현·모의 검증·TMAP Free 실제 연결 검증 완료, 사용자 검수 대기. 참가 신청 여부는 별도 확인 대기.
 - 개발 상태: `feat/transit-arrival-and-map-handoff`에서 4.5단계 구현·모의 검증 완료. 108개 자동 검사, 타입·린트·빌드, 실제 Redis atomic 한도, 모의 UI·HTTP 검증 통과.
-- 원격 반영: 배포 코드 `84ca4d4` push 완료. [최신 검수 URL](https://soommap-1esve63ga-yeongjis-projects-f12fc56b.vercel.app). `main`·Production은 변경하지 않음.
-- 다음 작업: TMAP 계정 상품·키 설정 후 실제 1곳 ETA 검증과 Preview 설정 → [4.5단계](reviews/stage-4.5.md) 최종 검수 요청.
+- 원격 반영: 배포 소스 `edc22aa` push 완료(앱 구현 `84ca4d4`). [최신 검수 URL](https://soommap-drsw0q1pl-yeongjis-projects-f12fc56b.vercel.app). `main`·Production은 변경하지 않음.
+- 다음 작업: [4.5단계](reviews/stage-4.5.md) 사용자 검수. 휴대폰 지도 앱 연결·위치 권한 동작 확인 및 승인 후 5단계 진행.
 
 2026-09-17 보완: 사용자가 도착시각과 예측 시각 사이의 인구 보간, 혼잡 단계 변화, 체류 구간 평가와 경계 검증을 요청했다. [상세 정책](temporal-alignment.md)에 따라 2단계를 보완한다. 추가 OpenAI/TMAP 호출·결제 없음. 3단계 승인은 아직 받지 않았다.
 
@@ -18,7 +18,7 @@
 | 2. 추천 엔진·시간 정렬 보완 | 승인·후속 작업 재개 | [보완 보고](reviews/stage-2-temporal.md), Preview `adf7c45` | 단계 조정 후 작업 재개 지시 |
 | 3. AI 연결 | 승인 완료 | [보고](reviews/stage-3.md), Preview `f1c8c0f` | 2026-09-17 “다음단계 진행해.” |
 | 4. 계획 조정·완료 | 승인 완료 | [보고](reviews/stage-4.md), Preview `a8554f6` | 2026-09-17 “다음 단계 진행해” |
-| 4.5. 이동시간·길찾기 실행 | 실제 연결 검증 대기 | [검수 현황](reviews/stage-4.5.md) | 실제 연결 후 요청 |
+| 4.5. 이동시간·길찾기 실행 | 자체 검증 완료·검수 대기 | [검수 보고](reviews/stage-4.5.md), Preview `edc22aa` | Free 실제 연결 포함 검수 요청 |
 | 5. 부가 기능 | 대기 | — | — |
 | 6. 디자인 통합 | 대기 | — | — |
 | 7. 최종 검증·제출 준비 | 대기 | — | — |
@@ -87,3 +87,5 @@
 - 2026-09-17 18:37 KST: 4.5단계 Preview `3817281` READY. 실제 서울 자료로 수동 도착 비교·확정·출발지 재사용 지도 버튼까지 공개 검증. 자동 ETA는 TMAP 키 연결 대기. [설정 안내](tmap-setup.md). 다음 단계는 아직 착수하지 않음.
 
 - 2026-09-17: 사용자 TMAP 키 입력 완료 및 Free 우선 선택. 로컬 free 확인. Preview 전용 키 연결 뒤 실제 공원 1곳으로 검증하며 종량제는 켜지 않는다.
+
+- 2026-09-17 18:45 KST: Preview `edc22aa` READY, TMAP Free 실제 연결 성공. 서울역 1호선 → 반포안내센터 1건으로 자동 도착·체류 예측·시각 고정·선택·확정·지도 버튼 검증 완료. 전후 Redis 장부 0→1건/10건, 고정·선택·확정 추가 호출 0회. 내부 비용 예약 1원은 실제 청구액이 아니며 Free 검증 비용 0원, OpenAI 추가 0회/$0. 사용자 검수 대기, 5단계 미착수.
