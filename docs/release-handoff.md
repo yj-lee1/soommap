@@ -5,7 +5,7 @@
 ## 공개 주소와 배포
 
 - 제출·체험 주소: https://soommap-review-yeongjis-projects-f12fc56b.vercel.app/
-- A안 통합 앱 코드: `2a3c083`, 라이선스·안내 포함 배포 코드: `60b2eb8`. 개발 브랜치 `feat/editorial-experience`, 기본 브랜치에도 완료 코드를 반영한다.
+- A안 통합 앱 코드: `2a3c083`, 라이선스·안내 포함 배포 코드: `60b2eb8`. 개발 브랜치 `feat/editorial-experience`, 기본 브랜치 `main`에도 완료 코드·문서 반영(2aad17d 기준 빠른 전진, 원격 기존 이력 보존).
 - 검증한 불변 배포: https://soommap-jpqn03x17-yeongjis-projects-f12fc56b.vercel.app/
 - 배포 ID: `dpl_3a4wXHYbE5P4EZq7U5RFT1bFT3A4`, Preview READY.
 - 이전 기능판 복구 주소: https://soommap-oeg7srice-yeongjis-projects-f12fc56b.vercel.app/

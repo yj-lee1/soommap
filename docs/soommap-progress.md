@@ -3,10 +3,10 @@
 기준 계획: [단독 실행·단계별 검수 계획](./soommap-execution-plan.md)
 
 - 지정 원격: `git@github.com:yj-lee1/soommap.git`
-- 현재 상태: 통합 검수 결과·화면 흐름은 작업 방향으로 승인됨. 6단계 두 시각 방향과 대표 동작 샘플 자체 확인 완료, 시각 방향 선택 대기. 최종 디자인·기능 전체·출시 승인이 아니다. 참가 신청 여부는 별도 확인 대기.
-- 개발 상태: `design/visual-directions`. 앱은 `c963000` 유지. 기존 117개 자동 검사·타입·린트·빌드 결과 재사용. 실제 AI+TMAP+서울시 HTTP 연결 검증은 기존 결과를 유지하며 전체 실기기 UI 흐름은 별도 대기.
-- 원격 반영: 배포 코드 `c963000` push 완료. [고정 검수 URL](https://soommap-review-yeongjis-projects-f12fc56b.vercel.app). `main`·Production은 변경하지 않음.
-- 다음 작업: [두 시각 방향](design/stage-6-visual-directions.md) 사용자 확인 후 승인된 [화면 구성](design/stage-6-screen-plan.md)에 디자인 통합. 실제 UI 전체 변경은 아직 시작하지 않음.
+- 현재 상태: 사용자 A안 선택·6~8단계 연속 완료/임시저장 지시에 따라 디자인 통합, 모의·실제 핵심 흐름 검수와 공개 배포 완료. 실제 휴대폰·첫 사용자 관찰은 별도 미완료.
+- 개발 상태: `feat/editorial-experience`, 배포 코드 `60b2eb8`. 117개 검사·타입·lint·build와 공개 실제 AI+TMAP+서울시 UI 검수 통과. API 계약·추천 엔진·예산 제어 유지.
+- 원격 반영: `main`과 개발 브랜치에 완료 코드·문서 반영(2aad17d 기준 빠른 전진, 기존 이력 보존). [고정 공개 Preview](https://soommap-review-yeongjis-projects-f12fc56b.vercel.app). Production 별도 구성 없음.
+- 다음 작업: 원티드 설명·서비스 URL·기술 태그는 임시저장 후 재조회 확인. 이미지 파일은 완성했으나 웹 첨부는 Chrome 파일 접근 제한/Mac 잠금으로 미완료. 사용자 설정 응답 후 첨부·재저장. 최종 과제 제출은 하지 않는다.
 
 2026-09-17 보완: 사용자가 도착시각과 예측 시각 사이의 인구 보간, 혼잡 단계 변화, 체류 구간 평가와 경계 검증을 요청했다. [상세 정책](temporal-alignment.md)에 따라 2단계를 보완한다. 추가 OpenAI/TMAP 호출·결제 없음. 3단계 승인은 아직 받지 않았다.
 
@@ -20,9 +20,9 @@
 | 4. 계획 조정·완료 | 승인 완료 | [보고](reviews/stage-4.md), Preview `a8554f6` | 2026-09-17 “다음 단계 진행해” |
 | 4.5. 이동시간·길찾기 실행 | 승인 완료 | [검수 보고](reviews/stage-4.5.md), Preview `edc22aa` | 네이버지도 연결 성공 확인 및 다음 단계 진행 지시 |
 | 5. 재방문·부가 기능 | 자체 확인 완료·검수 대기 | [보고](reviews/stage-5.md), Preview `c963000` | 재방문 보존·그래프·지도 확인 요청 |
-| 6. 디자인 통합 | 흐름 승인·시각 방향 검수 대기 | [통합 감사](reviews/core-flow-pre-design.md), [두 시각 방향](design/stage-6-visual-directions.md). 앱 미변경 | 2026-09-19 흐름 승인. 두 방향 확인 후 전체 적용 지시 |
-| 7. 최종 검증·제출 준비 | 대기 | — | — |
-| 8. 최종 반영·제출 확인 | 대기 | — | — |
+| 6. 디자인 통합 | 자체 검수·배포 완료 | A안, 배포 `60b2eb8`, [검수](reviews/final-experience-review.md) | A안 승인 및 마지막 단계까지 연속 수행 지시 |
+| 7. 최종 검증·제출 준비 | 자체 검수 완료, 실기기/사용자 관찰 미완료 | 실제 통합·117개 검사·캡처 4장·제출 문구 | 허위 실사용 검증 없이 미완료 구분 |
+| 8. 최종 반영·제출 확인 | 코드·배포·문구 임시저장 완료, 이미지 첨부 대기 | main 반영, [인계](release-handoff.md), [제출 자료](submission/wanted-draft.md) | Mac 잠금 해제 또는 Chrome 파일 접근 설정 필요. 최종 제출 미실행 |
 
 ## 결정 기록
 
