@@ -12,7 +12,7 @@ function PopulationRange({ range }: { range?: { min: number; max: number } }) {
 
 export default async function Home() {
   const overview = await getPopulationOverview();
-  return <main className="page">
+  return <main id="main" className="page">
     <header>
       <p className="eyebrow">원자료 확인 · 한강 5곳</p>
       <h1>숨맵 원자료</h1><Link href="/" prefetch={false}>조건 비교로 돌아가기</Link>

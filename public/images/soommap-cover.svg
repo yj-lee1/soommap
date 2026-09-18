@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+<rect width="1200" height="630" fill="#f8f7f2"/>
+<g fill="#292f2c" font-family="AppleMyungjo, Batang, serif"><text x="72" y="100" font-size="48">숨맵</text><text x="72" y="278" font-size="66">계획은 조금만,</text><text x="72" y="373" font-size="66">산책은 더 느긋하게.</text></g>
+<path d="M72 133h1056M72 536h1056" stroke="#292f2c" stroke-width="1"/>
+<g fill="#606762" font-family="Apple SD Gothic Neo, sans-serif"><text x="240" y="93" font-size="16" letter-spacing="2">서울 산책 안내서 / 한강 편</text><text x="76" y="440" font-size="23">원래 계획을 지키며, 덜 붐비는 외출을 찾아요.</text><text x="76" y="580" font-size="15" letter-spacing="2">SOOMMAP · SEOUL, 2026</text></g>
+<g transform="translate(880 227)"><circle cx="54" cy="34" r="29" fill="none" stroke="#385b49" stroke-width="2"/><circle cx="54" cy="34" r="5" fill="#385b49"/><path d="M54 64v99" stroke="#828d80" stroke-width="2" stroke-dasharray="3 7"/><path d="M47 166l7 8 7-8" fill="none" stroke="#828d80" stroke-width="2"/><rect x="25" y="190" width="58" height="58" fill="#385b49"/><path d="M44 217l8 8 14-17" fill="none" stroke="#fffefa" stroke-width="3"/></g>
+</svg>

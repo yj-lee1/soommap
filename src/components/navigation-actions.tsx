@@ -27,8 +27,8 @@ export function NavigationActions({ origin, place }: { origin: Origin; place: Pl
     window.location.href = provider === "kakao" ? links.kakao : android ? links.naverAndroid : links.naver;
   }
   return <div className="navigation-actions">
-    <p><strong>{origin.name} → {place.accessPoint.name}</strong><br />대중교통 길찾기 · 출발지와 목적지를 자동 입력해요.</p>
-    <div className="action-row"><button onClick={() => launch("naver")}>네이버지도로 길찾기</button><button onClick={() => launch("kakao")}>카카오맵으로 길찾기</button></div>
+    <dl className="route-endpoints"><dt>출발</dt><dd>{origin.name}</dd><dt>도착</dt><dd>{place.name}<small>{place.accessPoint.name} 기준</small></dd></dl><p className="note">대중교통 길찾기 · 출발지와 목적지를 다시 입력할 필요 없어요.</p>
+    <div className="action-row"><button className="primary" onClick={() => launch("naver")}>네이버지도로 길찾기</button><button onClick={() => launch("kakao")}>카카오맵으로 길찾기</button></div>
     {fallback && <div className="notice" role="status"><p>{fallback === "naver" ? "네이버 길찾기는 모바일 지도 앱으로 연결합니다. 앱이 열리지 않았다면 설치 후 다시 눌러주세요." : "카카오맵 앱이 열리지 않았다면 아래 공식 웹 길찾기를 이용해주세요."}</p>
       {fallback === "naver" && <div className="action-row"><a href={links.naverIosStore} target="_blank" rel="noreferrer">네이버지도 iOS 설치</a><a href={links.naverAndroidStore} target="_blank" rel="noreferrer">네이버지도 Android 설치</a></div>}
       <a href={links.kakaoWeb} target="_blank" rel="noreferrer">출발·도착지가 입력된 카카오맵 웹 길찾기</a>

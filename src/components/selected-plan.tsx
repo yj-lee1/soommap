@@ -32,16 +32,16 @@ export function SelectedPlanPanel({ plan, choice, conditions, places, origin, pe
     {plan?.notice && <p className="notice">{plan.notice}</p>}
     {plan && !usable && !pending && !error && plan.check.eligible && <p className="notice">자료의 최신성 기준, 확인 유효시간 또는 도착시각을 지났어요. 자료를 다시 확인해주세요.</p>}
     {plan?.check.reasons.map(reason => <p className="notice" key={reason}>{reason}</p>)}
-    {candidate && <><TemporalEvidence candidate={candidate} />
+    {candidate && <><details><summary>선택한 계획의 혼잡 근거</summary><TemporalEvidence candidate={candidate} maximum={conditions.soft.maximumPreferredCongestion} /></details>
       <p className="note">원자료 {formatSeoulTime(candidate.sourceUpdatedAt)} · 수신 {formatSeoulTime(candidate.fetchedAt)} · 확인 {formatSeoulTime(plan!.check.checkedAt)}</p>
       {candidate.dataConfidence === "delayed" && <p className="notice">허용하신 30~60분 전 원자료의 미래 예측을 참고했어요.</p>}
       <p>처음 계획 대비: {candidate.change.placeChanged === null ? "처음 정한 장소" : candidate.change.placeChanged ? "장소 변경" : "장소 유지"} · {candidate.change.arrivalDeltaMinutes === null ? "처음 정한 도착시각" : candidate.change.arrivalDeltaMinutes === 0 ? "도착시각 유지" : `${Math.abs(candidate.change.arrivalDeltaMinutes)}분 ${candidate.change.arrivalDeltaMinutes > 0 ? "늦춤" : "앞당김"}`}</p>
     </>}
     {!plan?.confirmedAt && usable && candidate && <div>
       {!candidate.meetsPreference && <label className="checkbox"><input type="checkbox" checked={accepted} onChange={e => setAccepted(e.target.checked)} />혼잡 선호 충족이 불확실하거나 선호를 넘는 예측임을 확인했어요</label>}
-      <button disabled={!candidate.meetsPreference && !accepted} onClick={onConfirm}>이 계획 확정</button>
+      <button className="primary" disabled={!candidate.meetsPreference && !accepted} onClick={onConfirm}>이 계획 확정</button>
     </div>}
-    {plan?.confirmedAt && <><p>계획을 확정했어요. {candidate?.travel ? `대중교통 약 ${Math.ceil(candidate.travel.totalSeconds / 60)}분이 반영됐어요.` : "이동시간은 반영하지 않은 계획입니다."}</p><div className="action-row">
+    {plan?.confirmedAt && <><h4 className="execution-heading">이 계획으로 나가볼까요?</h4><p>계획을 확정했어요. {candidate?.travel ? `대중교통 약 ${Math.ceil(candidate.travel.totalSeconds / 60)}분이 반영됐어요.` : "이동시간은 반영하지 않은 계획입니다."}</p><div className="action-row">
       <button disabled={!usable} onClick={copy}>계획 문구 복사</button>
       {!origin && <a href={locationLink(place)} target="_blank" rel="noreferrer">카카오맵에서 공원 위치 보기</a>}
     </div>{origin ? <NavigationActions origin={origin} place={place} /> : <p className="note">위에서 출발지를 선택한 뒤 비교하면 확정 후 출발·도착지가 입력된 길찾기를 이용할 수 있어요.</p>}</>}
