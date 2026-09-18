@@ -5,9 +5,9 @@
 ## 공개 주소와 배포
 
 - 제출·체험 주소: https://soommap-review-yeongjis-projects-f12fc56b.vercel.app/
-- A안 통합 앱 코드: `2a3c083`, 브랜치 `feat/editorial-experience`.
-- 검증한 불변 배포: https://soommap-5yf3e08j5-yeongjis-projects-f12fc56b.vercel.app/
-- 배포 ID: `dpl_4dUUHuL9kFBxF3Y2CLkPBwAouQVr`, Preview READY.
+- A안 통합 앱 코드: `2a3c083`, 라이선스·안내 포함 배포 코드: `60b2eb8`. 개발 브랜치 `feat/editorial-experience`, 기본 브랜치에도 완료 코드를 반영한다.
+- 검증한 불변 배포: https://soommap-jpqn03x17-yeongjis-projects-f12fc56b.vercel.app/
+- 배포 ID: `dpl_3a4wXHYbE5P4EZq7U5RFT1bFT3A4`, Preview READY.
 - 이전 기능판 복구 주소: https://soommap-oeg7srice-yeongjis-projects-f12fc56b.vercel.app/
 
 공개 체험 URL은 로그인 없이 HTTP 200이며 로컬 개발 서버와 무관하게 동작한다. ‘Production 배포’라고 부르지 않는다. 별도 Production 키/환경을 새로 만들지 않았다. Preview의 이미 검증한 연결을 재사용한다. 계정 플랜·유료 기능을 변경하지 않았다.
@@ -40,3 +40,7 @@ vercel alias set <새-불변-Preview-주소> soommap-review-yeongjis-projects-f1
 실제 기기 GPS 권한 거절, 카카오 앱 설치/미설치, PWA 설치와 첫 사용자 관찰은 미완료다. 네이버 앱 연결은 사용자가 성공 확인한 기록을 재사용한다. 최종 추천은 실제 방문 시 현장 상태나 운행을 보장하지 않는다.
 
 원티드 최종 제출 버튼은 누르지 않는다. 현재 임시저장은 심사 제출 완료가 아니며 마감 전에 사용자 확인이 필요하다. 이미지 첨부가 남으면 최종 진행 기록에 명시한다.
+
+## 원티드 현재 상태
+
+제목·문제·429자 AI 활용 설명·공개 URL과 Next.js/React/ChatGPT/Vercel 태그를 임시저장하고 새로고침으로 보존을 확인했다. 최종 제출은 미실행. 대표 이미지와 실제 스크린샷 4장은 로컬에 완성했지만 Chrome 확장 파일 접근 제한으로 첨부하지 못했다. 일반 파일 선택창 대안은 Mac 잠금으로 중단되어 사용자 잠금 해제 또는 확장 파일 접근 설정 응답을 기다린다. 설정 승인으로 추정해 보안 설정을 바꾸지 않았다. 이미지 없이 제출 준비 완료라고 주장하지 않는다.
