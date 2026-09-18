@@ -22,7 +22,7 @@ https://soommap-review-yeongjis-projects-f12fc56b.vercel.app/
 
 ## 이미지
 대표: public/images/soommap-cover.png
-스크린샷: 최종 배포의 시작/추천/길찾기 화면. 16:9 권장. 실제 데이터 캡처 시점과 향후 접속 결과는 다를 수 있다.
+스크린샷: 01-start.png / 02-recommendation.png / 03-visit-timeline.png / 04-navigation.png. 모두 1600×900. 2026-09-19 08:51~08:52 KST 실제 배포 검증 화면이며, 캡처 시점과 향후 접속 결과는 다를 수 있다.
 
 ## 60초 시연 순서
 1. ‘지금 한강에서 한 시간 산책하고 싶어. 목적지는 아직 못 정했고 보통보다 붐비는 곳은 피하고 싶어.’ 입력.
