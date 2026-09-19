@@ -42,3 +42,15 @@
 - 2026-09-19 후속: 사용자가 A ‘서울 산책 안내서’를 선택하고 전체 디자인 통합·최종 검수·제출 수준 완성 및 원티드 제출본 작성·임시저장을 연속 수행하도록 지시했다. 이번 6~8단계는 별도 단계 승인 대기 없이 보고하며 계속한다. 최종 과제 제출 버튼은 누르지 않는다. 실제 기기·첫 사용자 검증을 허위 완료로 바꾸지 않는다. TMAP 개발·검수·공개 체험 합산 종량제 총 5,000원 승인; 계정 상품 전환 완료 확인 전 free 유지.
 
 - 2026-09-19 최종 비용 선택: 사용자가 “그냥 free로 일단 하자”로 TMAP 종량제 전환을 다시 보류했다. 현재 Free 하루 10건을 유지한다. 유료 예산 승인 기록만으로 paid를 켜지 않으며 공개 소진 시 입력·출발지를 보존한 수동 방문 시간대 비교로 안내한다.
+
+- 2026-09-19: 사용자가 A안의 정보 배치 개선·선명한 색/지도·조건 고정/시간축/실행 카드 모션 강화를 승인하고 완료 후 새 대표이미지와 스크린샷 채팅 첨부를 요청했다. 기존 추천/API/예산 계약을 보존하며 개선·검수·고정 Preview 갱신까지 진행한다. 제출 이미지 업로드는 사용자 담당, 최종 제출 미실행 유지.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

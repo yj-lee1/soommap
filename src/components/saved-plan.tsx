@@ -9,7 +9,7 @@ export function SavedPlanPanel({ saved, origin, places, pending, onCompare, onDi
   saved: SavedChoice; origin: Origin | null; places: Place[]; pending: boolean; onCompare: () => void; onDismiss: () => void;
 }) {
   const place = places.find(p => p.id === saved.choice.placeId)!;
-  return <section className="panel selected-plan" aria-labelledby="saved-plan-title">
+  return <section className="panel selected-plan saved-execution" aria-labelledby="saved-plan-title">
     <h2 id="saved-plan-title">{saved.confirmedAt ? "저장된 확정 계획" : "저장된 선택 계획"}</h2>
     <h3>{place.name}</h3><p>{formatSeoulTime(saved.choice.arrivalAt)} 도착 · {saved.conditions.originalPlan.durationMinutes ? `${saved.conditions.originalPlan.durationMinutes}분 산책` : "체류시간 미정"}</p>
     {saved.confirmedAt && <p className="note">확정했던 시각 {formatSeoulTime(saved.confirmedAt)}</p>}

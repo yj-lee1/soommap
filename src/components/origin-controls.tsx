@@ -39,7 +39,7 @@ export function OriginControls({ origin, automatic, transit, disabled, mobilityR
       {!results.length && <p>일치하는 역이 없어요. 역 이름 일부로 검색하거나 현재 위치를 사용해주세요.</p>}
     </div>}
     {origin && <p className="origin-name"><strong>출발: {origin.name}</strong>{origin.source === "station" ? " · 출발역 대표 위치 기준" : " · 선택 당시 위치, 이동했다면 다시 확인"}</p>}
-    {notice && <p role="status">{notice}</p>}
+    {notice && <p className="notice" role="status">{notice}</p>}
     <fieldset className="arrival-modes"><legend>언제 출발하나요?</legend>
       <label className="checkbox"><input type="radio" name="arrival-mode" checked={automatic} disabled={disabled || !mobilityReady} onChange={() => onMode(true)} />지금 출발 · 자동 도착</label>
       <label className="checkbox"><input type="radio" name="arrival-mode" checked={!automatic} disabled={disabled} onChange={() => onMode(false)} />방문 시간대 직접 정하기</label>

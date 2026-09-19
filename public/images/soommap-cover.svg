@@ -1,7 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
-<rect width="1200" height="630" fill="#f8f7f2"/>
-<g fill="#292f2c" font-family="AppleMyungjo, Batang, serif"><text x="72" y="100" font-size="48">숨맵</text><text x="72" y="278" font-size="66">계획은 조금만,</text><text x="72" y="373" font-size="66">산책은 더 느긋하게.</text></g>
-<path d="M72 133h1056M72 536h1056" stroke="#292f2c" stroke-width="1"/>
-<g fill="#606762" font-family="Apple SD Gothic Neo, sans-serif"><text x="240" y="93" font-size="16" letter-spacing="2">서울 산책 안내서 / 한강 편</text><text x="76" y="440" font-size="23">원래 계획을 지키며, 덜 붐비는 외출을 찾아요.</text><text x="76" y="580" font-size="15" letter-spacing="2">SOOMMAP · SEOUL, 2026</text></g>
-<g transform="translate(880 227)"><circle cx="54" cy="34" r="29" fill="none" stroke="#385b49" stroke-width="2"/><circle cx="54" cy="34" r="5" fill="#385b49"/><path d="M54 64v99" stroke="#828d80" stroke-width="2" stroke-dasharray="3 7"/><path d="M47 166l7 8 7-8" fill="none" stroke="#828d80" stroke-width="2"/><rect x="25" y="190" width="58" height="58" fill="#385b49"/><path d="M44 217l8 8 14-17" fill="none" stroke="#fffefa" stroke-width="3"/></g>
+<rect width="1200" height="630" fill="#F7F5ED"/>
+<g font-family="Apple SD Gothic Neo, sans-serif" fill="#23362D"><text x="50" y="67" font-family="AppleMyungjo, serif" font-size="41">숨맵</text><circle cx="145" cy="63" r="4" fill="#2856AD"/><text x="177" y="61" font-size="16" letter-spacing="1">서울 산책 안내서</text><text x="1085" y="61" font-size="14">한강 편</text></g>
+<rect x="36" y="95" width="1128" height="440" fill="#216343"/>
+<g font-family="Apple SD Gothic Neo, sans-serif"><text x="78" y="150" font-size="15" fill="#D9E9CD" letter-spacing="2">가고 싶은 마음은 그대로</text></g>
+<g font-family="AppleMyungjo, Batang, serif" font-size="63" letter-spacing="-3"><text x="74" y="258" fill="#FFFEF8">계획은 조금만,</text><text x="74" y="350" fill="#F6D96F">산책은 더 느긋하게.</text></g>
+<g fill="#EDF3E7" font-family="Apple SD Gothic Neo, sans-serif" font-size="22"><text x="78" y="424">지키고 싶은 약속을 남기고,</text><text x="78" y="460">덜 붐비게 나갈 방법을 찾아요.</text></g>
+<g transform="translate(766 185)"><circle cx="271" cy="48" r="39" fill="#F4CE54"/><path d="M-12 166C56 62 133 229 191 129S293 105 384 160" fill="none" stroke="#8FCCE5" stroke-width="43"/><path d="M-12 166C56 62 133 229 191 129S293 105 384 160" fill="none" stroke="#FFF9DF" stroke-width="2" stroke-dasharray="5 11"/><path d="M92 77C40 77 50 17 92 13C130 26 137 77 92 77Z" fill="#B9D963"/><path d="M92 42V108M92 73L110 52" stroke="#FFFAE7" stroke-width="3"/><circle cx="192" cy="126" r="9" fill="#F4CE54" stroke="#16482E" stroke-width="3"/><text x="88" y="278" fill="#E0EBD5" font-family="Arial, sans-serif" font-size="13" letter-spacing="3">A LITTLE SLOWER.</text><path d="M88 294H330" stroke="#B7D2B6"/></g>
+<g font-family="Apple SD Gothic Neo, sans-serif" font-size="16" fill="#23362D"><text x="51" y="585">01   지킬 조건 고정</text><text x="349" y="585">02   도착·체류 예측 비교</text><text x="717" y="585">03   지도 길찾기로 출발</text><text x="1090" y="585" font-size="13">2026</text></g>
 </svg>

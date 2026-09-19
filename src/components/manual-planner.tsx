@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { formatSeoulTime, seoulInputTime } from "@/lib/data/time";
 import { draftFromConditions, manualConditions, type ManualDraft } from "@/lib/domain/manual";
-import type { Candidate, Conditions, Recommendation } from "@/lib/domain/types";
+import type { Conditions, Recommendation } from "@/lib/domain/types";
 import type { PopulationOverview } from "@/lib/server/population";
 import type { AiPlan } from "@/lib/server/ai-planner";
 import { adjustPlan, effectiveConditions, startReplanning, type Adjustment, type Replanning } from "@/lib/domain/replanning";
@@ -17,16 +17,9 @@ import type { Origin, TransitBundle } from "@/lib/domain/mobility";
 import { PLANNER_STORAGE_KEY, parseSavedPlanner, readSavedPlanner, type SavedChoice } from "@/lib/domain/saved-planner";
 import { SavedPlanPanel } from "./saved-plan";
 import { PlaceExplorer } from "./place-explorer";
-
-function changeText(candidate: Candidate, names: Map<string, string>, c: Conditions) {
-  const parts: string[] = [];
-  if (candidate.change.placeChanged === true) parts.push(`장소: ${names.get(c.originalPlan.placeId!)} → ${names.get(candidate.placeId)}`);
-  else if (candidate.change.placeChanged === false) parts.push("장소 유지");
-  const delta = candidate.change.arrivalDeltaMinutes;
-  if (delta === 0) parts.push("도착 시각 유지");
-  else if (delta !== null) parts.push(`도착 ${Math.abs(delta)}분 ${delta > 0 ? "늦춤" : "앞당김"}`);
-  return parts.join(" · ");
-}
+import { ParkMap } from "./park-map";
+import { PlanCard } from "./plan-card";
+import { PlanDifference } from "./plan-difference";
 
 export function ManualPlanner({ overview, mobilityReady }: { overview: PopulationOverview; mobilityReady: boolean }) {
   const places = useMemo(() => overview.rows.map(row => row.place), [overview]);
@@ -235,7 +228,7 @@ export function ManualPlanner({ overview, mobilityReady }: { overview: Populatio
     } finally { clearTimeout(timeout); if (version === sequence.current) { setPending(false); setAiPending(false); } }
   }
   useEffect(() => {
-    if (response && !pending && focusResults.current) { focusResults.current = false; resultHeading.current?.focus(); }
+    if (response && !pending && focusResults.current) { focusResults.current = false; resultHeading.current?.focus({ preventScroll: true }); resultHeading.current?.scrollIntoView({ block: "start" }); }
   }, [response, pending]);
   const result = response?.result, applied = response?.conditions;
   const resultCurrent = applied?.revision === revision && !pending;
@@ -246,16 +239,16 @@ export function ManualPlanner({ overview, mobilityReady }: { overview: Populatio
       <details><summary>저장 안내·삭제</summary><p className="note">입력 문장·출발지·조건·선택 계획을 이 브라우저에 7일 보관해요. 혼잡 자료·이동시간·인증 토큰은 저장하지 않습니다.</p><button onClick={clearSaved}>저장 내용 삭제하고 새로 시작</button></details>
     </section>
     {savedChoice && <SavedPlanPanel saved={savedChoice} origin={origin} places={places} pending={pending} onCompare={compareSaved} onDismiss={clearSelection} />}
-    <div className="planner-shell"><div className="planner-input">
+    <div className={`planner-shell ${response ? "has-results" : ""}`}><div className={`planner-input ${!inputOpen ? "collapsed-input" : ""}`}>
     <div className="input-heading"><p className="eyebrow">01 / 나의 외출</p>{response && <button className="text-button" onClick={() => setInputOpen(!inputOpen)} aria-expanded={inputOpen} aria-controls="planner-fields">{inputOpen ? "입력 접기" : "처음 조건 수정"}</button>}</div>
-    {!inputOpen && <div className="input-summary"><h2>처음 계획은 그대로</h2><p>{text || "직접 정한 조건으로 비교했어요."}</p><p className="note">{origin?.name || "출발지 미정"} · {automatic ? "지금 출발" : "방문 시각 직접 지정"}</p><p>고정·제외 조건은 비교 결과에서 조정할 수 있어요.</p></div>}
+    {!inputOpen && <div className="input-summary"><span className="summary-tab">나의 산책 메모</span><h2>이 마음은 그대로.</h2><p>{text || "직접 정한 조건으로 비교했어요."}</p><p className="note">{origin?.name || "출발지 미정"} · {automatic ? "지금 출발" : "방문 시각 직접 지정"}</p><p className="note">고정·제외 조건은 비교 결과에서 조정해요.</p><ParkMap places={places} activeId={choice?.placeId ?? result?.options.find(o => o.role === "recommended")?.candidate?.placeId} compact /></div>}
     <div id="planner-fields" hidden={!inputOpen}>
     <section className="natural-input" aria-labelledby="natural-title"><h2 id="natural-title">어떤 산책을 생각하나요?</h2>
       <label className="sr-only" htmlFor="outing-text">원하는 계획</label><textarea form="natural-form" id="outing-text" required maxLength={1200} rows={4} value={text}
         placeholder="지금 한강에서 한 시간 걷고 싶어.
 사람 많은 곳은 피하고 싶어."
         onChange={e => { setText(e.target.value); update({}); }} />
-      <p className="note">장소나 정확한 도착시각을 몰라도 괜찮아요.</p>
+      <p className="note">장소나 정확한 도착시각을 몰라도 괜찮아요.</p><div className="prompt-suggestions" aria-label="입력 예시"><button onClick={() => { setText("지금 한강에서 한 시간 걷고 싶어. 목적지는 아직 못 정했고 보통보다 붐비는 곳은 피하고 싶어."); update({}); }}>목적지는 아직이에요 ↗</button><button onClick={() => { setText("여의도한강공원에서 한 시간 산책하고 싶어. 장소는 그대로, 갈 수 있는 시간은 직접 정할게."); update({}); }}>장소는 지키고 싶어요 ↗</button></div>
     </section>
     <OriginControls origin={origin} automatic={automatic} transit={transit?.context ?? null} disabled={pending} mobilityReady={mobilityReady}
       onOrigin={value => { setOrigin(value); storeTransit(null); update({}); }}
@@ -329,7 +322,7 @@ export function ManualPlanner({ overview, mobilityReady }: { overview: Populatio
       </form>
     </section></details>
     </div></div><div className="planner-output">
-    {!response && !pending && <section className="welcome-note"><p className="eyebrow">오늘의 작은 변경</p><h2>가고 싶은 곳,<br />바꾸지 않아도 될까요?</h2><p>먼저 원래 계획을 살펴봐요.<br />그대로 괜찮다면 그대로, 조금 붐빈다면<br />장소 또는 시간을 바꾼 대안을 비교해요.</p><ol className="journey-steps"><li><span>01</span>바꾸기 어려운 조건은 고정하고</li><li><span>02</span>도착해서 머무는 시간까지 살펴보고</li><li><span>03</span>고른 계획은 지도 길찾기로 이어가요</li></ol><p className="note">여의도 · 반포 · 뚝섬 · 망원 · 난지</p></section>}
+    {!response && !pending && <section className="welcome-note"><div className="welcome-heading"><p className="eyebrow">오늘의 작은 변경</p><span className="edition-stamp">한강 편<br />VOL. 01</span><h2>어디로 가든,<br /><em>내 계획에 가깝게.</em></h2><p>바꿀 수 있는 것만 바꿔요.<br />아직 정하지 못했다면, 출발지에서부터.</p></div><ParkMap places={places} /><ol className="journey-steps"><li><span>01</span>장소·시간 중 지킬 조건 고정</li><li><span>02</span>도착해서 머무는 동안의 예측 비교</li><li><span>03</span>고른 계획에서 지도 길찾기로</li></ol></section>}
     {pending && !response && <section className="loading-plan" role="status"><p className="eyebrow">잠시, 계획을 살펴볼게요</p><h2>{aiPending ? "말씀하신 조건을 읽고 있어요." : "머무는 시간의 예측을 비교해요."}</h2><p>조건과 자료를 확인한 뒤 대안을 보여드릴게요.</p></section>}
     {aiPlan && <details className="interpreted-conditions"><summary>말씀하신 조건은 이렇게 읽었어요</summary><p>{draft.placeId ? names.get(draft.placeId) : "목적지 미정"} · {draft.duration ? `${draft.duration}분 산책` : "체류시간 미정 · 도착 기준"} · {draft.maximumCongestion}까지 선호</p>{aiPlan.assumptions.map(value => <p key={value}>{value}</p>)}{aiPlan.unsupported.map(value => <p className="notice" key={value}>평가하지 못한 조건: {value}</p>)}<button className="text-button" onClick={() => setInputOpen(true)}>읽은 조건 직접 수정</button></details>}
     {replanning && <><AdjustmentControls state={replanning} places={places} pending={pending} onAdjust={adjust} />
@@ -339,30 +332,30 @@ export function ManualPlanner({ overview, mobilityReady }: { overview: Populatio
       }}>현재 조정 조건으로 다시 비교</button>}
     </>}
     {result && applied && <section className="results" aria-labelledby="result-title" aria-live="polite" aria-busy={pending}>
-      <div className="results-intro"><p className="eyebrow">02 / 계획 비교</p><h2 ref={resultHeading} tabIndex={-1} id="result-title">{result.status === "ready" ? "조건에 맞는 비교 결과" : result.status === "preference-uncertain" ? "혼잡 선호 충족이 불확실한 결과" : result.status === "preference-unmet" ? "혼잡 선호에 못 미치는 결과" : "비교를 완료하지 못했어요"}</h2>
+      <div className="results-intro"><p className="eyebrow">02 / 계획 비교</p><h2 ref={resultHeading} tabIndex={-1} id="result-title">{result.status === "ready" ? "내 계획에 가까운 산책" : result.status === "preference-uncertain" ? "혼잡 선호 충족이 불확실한 결과" : result.status === "preference-unmet" ? "혼잡 선호에 못 미치는 결과" : "비교를 완료하지 못했어요"}</h2>
         {!resultCurrent && <p className="notice">이전 조건의 결과입니다. 새 비교가 완료되어야 선택할 수 있어요.</p>}
         <p>{result.message}</p>
-        <details><summary>원래 계획·지킬 조건 확인</summary><p>{applied.originalPlan.placeId ? "원래 계획" : "처음 정한 조건"}: {applied.originalPlan.placeId ? names.get(applied.originalPlan.placeId) : "장소 미정"} · {applied.originalPlan.preferredArrivalAt ? formatSeoulTime(applied.originalPlan.preferredArrivalAt) : "시각 미정"} · {applied.originalPlan.durationMinutes ? `${applied.originalPlan.durationMinutes}분 머물기` : "체류시간 미정"}</p>
+        <details className="comparison-proof"><summary>추천 이유·원래 계획·계산 근거</summary><p>{applied.originalPlan.placeId ? "원래 계획" : "처음 정한 조건"}: {applied.originalPlan.placeId ? names.get(applied.originalPlan.placeId) : "장소 미정"} · {applied.originalPlan.preferredArrivalAt ? formatSeoulTime(applied.originalPlan.preferredArrivalAt) : "시각 미정"} · {applied.originalPlan.durationMinutes ? `${applied.originalPlan.durationMinutes}분 머물기` : "체류시간 미정"}</p>
         <p>반드시 지킬 범위: {applied.hard.pinnedPlaceId ? `${names.get(applied.hard.pinnedPlaceId)}만` : applied.hard.allowedPlaceIds?.map(id => names.get(id)).join(", ") || "허용 장소 없음"}<br />
           도착 {formatSeoulTime(applied.hard.arrivalWindow.notBefore!)} ~ {formatSeoulTime(applied.hard.arrivalWindow.notAfter!)}</p>
         {applied.hard.pinnedArrivalAt && <p>고정한 도착시각: {formatSeoulTime(applied.hard.pinnedArrivalAt)}</p>}
         {!!applied.hard.excludedPlaceIds.length && <p>제외: {applied.hard.excludedPlaceIds.map(id => names.get(id)).join(", ")}</p>}
-        </details><p className="note">계산 시각 {formatSeoulTime(result.checkedAt)} · 필수 조건과 데이터 검사를 통과한 후보 {result.eligibleCount}개</p>
+        <p className="note">계산 시각 {formatSeoulTime(result.checkedAt)} · 필수 조건과 데이터 검사를 통과한 후보 {result.eligibleCount}개</p>
         {aiPlan?.conditions.revision === applied.revision && aiPlan.explanation.facts.length ? <div><p className="eyebrow">{aiPlan.explanation.mode === "ai-selected-evidence" ? "계산된 근거에서 AI가 정리한 설명" : "계산 근거 설명"}</p>
           {aiPlan.explanation.facts.map(fact => <p key={fact.id}>{fact.text}</p>)}</div> : result.explanation && <p>{result.explanation.reason}</p>}
         {aiPlan?.conditions.revision === applied.revision && aiPlan.notice && <p className="notice">{aiPlan.notice}</p>}
-        <details className="result-limitations"><summary>자료·예측·이동시간의 한계</summary>{result.limitations.map(text => <p className="note" key={text}>{text}</p>)}</details>
+        <details className="result-limitations"><summary>자료·예측·이동시간의 한계</summary>{result.limitations.map(text => <p className="note" key={text}>{text}</p>)}</details></details>
       </div>
       <div className="result-options">{result.options.map((option, index) => {
         const c = option.candidate;
         const unchanged = c?.change.placeChanged === false && c.change.arrivalDeltaMinutes === 0;
         const title = option.role === "original" ? "원래 계획" : option.role === "alternative" ? "다른 선택" : unchanged ? "추천 · 원래 계획 유지" : "추천";
-        return <article className={`panel result-card ${option.role === "recommended" ? "recommended-card" : ""}`} key={c?.id ?? `original-${index}`} aria-label={`${c ? names.get(c.placeId) : "원래 계획"} ${c ? formatSeoulTime(c.arrivalAt) : ""} ${title}`}>
-          <p className="eyebrow card-role">{title}{!option.eligible ? " · 비교 제외" : c?.dataConfidence === "delayed" ? " · 지연 예측 참고" : ""}</p>
+        return <PlanCard phase={choice && c && choice.placeId === c.placeId && choice.arrivalAt === c.arrivalAt ? selected?.confirmedAt ? "confirmed" : selectionPending ? "checking" : "selected" : "candidate"} className={`panel result-card ${option.role === "recommended" ? "recommended-card" : ""} ${c && !c.meetsPreference ? "preference-review" : ""}`} key={`${option.role}-${index}`} label={`${c ? names.get(c.placeId) : "원래 계획"} ${c ? formatSeoulTime(c.arrivalAt) : ""} ${title}`}>
+          <p className="eyebrow card-role">{title}{c && !c.meetsPreference && option.eligible ? " · 혼잡 선호 확인" : ""}{!option.eligible ? " · 비교 제외" : c?.dataConfidence === "delayed" ? " · 지연 예측 참고" : ""}</p>
           {choice && c && choice.placeId === c.placeId && choice.arrivalAt === c.arrivalAt ? <SelectedPlanPanel key={`${choice.placeId}:${choice.arrivalAt}:${selected?.check.checkedAt ?? "pending"}`} plan={selected} choice={choice} conditions={applied} places={places} origin={origin} pending={selectionPending} error={selectionError} onConfirm={confirmSelected} onRecheck={() => void checkSelected(choice, selected)} onAdjust={clearSelection} /> : <>
-          <h3 className="place-title">{c ? names.get(c.placeId) : names.get(applied.originalPlan.placeId!)}</h3>
-          <p className="arrival-line">{c?.arrivalAt || applied.originalPlan.preferredArrivalAt ? <time dateTime={c?.arrivalAt ?? applied.originalPlan.preferredArrivalAt!}>{formatSeoulTime(c?.arrivalAt ?? applied.originalPlan.preferredArrivalAt!)}</time> : "도착시각 미정"} 도착 · {applied.originalPlan.durationMinutes ? `${applied.originalPlan.durationMinutes}분 머물기` : "도착 기준 비교"}</p>
-          {c && <p className="change-summary"><span>계획의 변화</span>{changeText(c, names, applied) || "처음 정하는 외출 계획"}</p>}
+          <div className="plan-face"><h3 className="place-title" key={c?.placeId}>{c ? names.get(c.placeId) : names.get(applied.originalPlan.placeId!)}</h3>
+          <p className="arrival-line">{c?.arrivalAt || applied.originalPlan.preferredArrivalAt ? <time key={c?.arrivalAt} dateTime={c?.arrivalAt ?? applied.originalPlan.preferredArrivalAt!}>{formatSeoulTime(c?.arrivalAt ?? applied.originalPlan.preferredArrivalAt!)}</time> : "도착시각 미정"} 도착 · {applied.originalPlan.durationMinutes ? `${applied.originalPlan.durationMinutes}분 머물기` : "도착 기준 비교"}</p>
+          </div>{c && <PlanDifference candidate={c} conditions={applied} places={places} eligible={option.eligible} />}
           {c && option.eligible && <div className="action-row">
             <button className="primary select-plan" disabled={!resultCurrent || selectionPending} onClick={() => void checkSelected({ placeId: c.placeId, arrivalAt: c.arrivalAt })}>이 계획 선택</button>
 
@@ -378,7 +371,7 @@ export function ManualPlanner({ overview, mobilityReady }: { overview: Populatio
           {c && <button onClick={() => { setExploredPlaceId(c.placeId); document.getElementById("place-explorer")?.scrollIntoView({ block: "start" }); }}>위치·전체 예측 보기</button>}
 
           </>}
-        </article>;
+        </PlanCard>;
       })}</div>
       {result.excludedPlaces.length > 0 && <details className="panel"><summary>장소별 제외 이유 {result.excludedPlaces.length}곳</summary>
         {result.excludedPlaces.map(item => <div key={item.placeId}><h3>{names.get(item.placeId)}</h3><ul>{item.reasons.map(reason => <li key={reason}>{reason}</li>)}</ul></div>)}

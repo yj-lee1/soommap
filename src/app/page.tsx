@@ -1,3 +1,4 @@
+import { WalkArt } from "@/components/walk-art";
 import { ManualPlanner } from "@/components/manual-planner";
 import Link from "next/link";
 import { MotionPreference } from "@/components/motion-preference";
@@ -12,10 +13,10 @@ export default async function Home() {
       <span className="edition">서울 산책 안내서 <span>한강 편</span></span>
       <Link className="header-link" href="/data" prefetch={false}>자료와 출처 <span aria-hidden="true">↗</span></Link>
     </header>
-    <section className="hero"><p className="eyebrow">가고 싶은 마음은 그대로</p>
-      <h1>계획은 조금만,<br />산책은 더 느긋하게.</h1>
-      <p className="lead">장소를 바꾸거나, 시간을 조금 늦추거나.<br className="mobile-break" /> 내 계획에서 덜 바꾸는 쪽을 함께 찾아요.</p>
-      <p className="hero-caption">한강공원 5곳 · 서울시 혼잡 예측 · 대중교통 도착시간</p>
+    <section className="hero"><div className="hero-copy"><p className="eyebrow">서울 산책 안내서 · 가고 싶은 마음은 그대로</p>
+      <h1>계획은 조금만,<br /><span>산책은 더 느긋하게.</span></h1>
+      <p className="lead">지키고 싶은 약속은 그대로.<br />덜 붐비게 나갈 방법을 찾아요.</p>
+      <p className="hero-caption">한강공원 5곳 · 도착부터 머무는 시간까지</p></div><WalkArt />
     </section>
     <ManualPlanner overview={overview} mobilityReady={Boolean(process.env.TMAP_API_KEY?.trim())} />
     <footer className="site-footer"><div><span className="wordmark">숨맵</span><p>멀리 바꾸지 않아도, 조금 더 느긋한 외출.</p></div>
