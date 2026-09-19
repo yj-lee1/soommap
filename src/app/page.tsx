@@ -15,7 +15,7 @@ export default async function Home() {
     </header>
     <section className="hero"><div className="hero-copy"><p className="eyebrow">서울 산책 안내서 · 가고 싶은 마음은 그대로</p>
       <h1>계획은 조금만,<br /><span>산책은 더 느긋하게.</span></h1>
-      <p className="lead">지키고 싶은 약속은 그대로.<br />덜 붐비게 나갈 방법을 찾아요.</p>
+      <p className="lead">지키고 싶은 약속은 그대로.<br /> 덜 붐비게 나갈 방법을 찾아요.</p>
       <p className="hero-caption">한강공원 5곳 · 도착부터 머무는 시간까지</p></div><WalkArt />
     </section>
     <ManualPlanner overview={overview} mobilityReady={Boolean(process.env.TMAP_API_KEY?.trim())} />

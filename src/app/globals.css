@@ -381,3 +381,5 @@ button.primary:hover:not(:disabled) { background:#174e33; }
 
 .recommended-card.preference-review .card-role,.recommended-card.preference-review .plan-face { background:#f2e4bf;color:#5a421f; }
 .recommended-card.preference-review { border-color:#a98748; }
+
+.original-reference { border-block:1px solid var(--border);padding:13px 0;margin:16px 0; }.original-reference>span { display:block;font-size:10px;color:var(--secondary);margin-bottom:5px; }.original-reference strong { font-size:16px; }.original-reference p { font-size:12px;margin:5px 0 0; }
